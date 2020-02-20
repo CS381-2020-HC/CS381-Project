@@ -2,45 +2,45 @@ module Man where
 
 import Data.List
 
-data Expn = Get
+data Expi = Get
           | Lit Int
-          | Add Expn Expn
-          | Mul Expn Expn
-          | Mis Expn Expn
-          | Div Expn Expn
+          | Add Expi Expi
+          | Mul Expi Expi
+          | Mis Expi Expi
+          | Div Expi Expi
 
 data Expb = GetBool
           | Bl Bool
-          | Bln_s Expn Expn
-          | Bln_q Expn Expn
-          | Bln_nq Expn Expn
-          | Bln_b Expn Expn
-          | Bln_sq Expn Expn
-          | Bln_bq Expn Expn
+          | Bli_s Expi Expi
+          | Bli_q Expi Expi
+          | Bli_nq Expi Expi
+          | Bli_b Expi Expi
+          | Bli_sq Expi Expi
+          | Bli_bq Expi Expi
           | Blb_q Expb Expb
           | Blb_nq Expb Expb
 
-test :: Expn
+test :: Expi
 test = Add (Lit 2) (Mul (Lit 6)(Lit 3))
 
 test1 :: Expb
-test1 = Bln_b (Add (Lit 2) (Mul (Lit 6)(Lit 3))) (Lit 21)
+test1 = Bli_b (Add (Lit 2) (Mul (Lit 6)(Lit 3))) (Lit 21)
 
-doNum :: Expn -> Int -> Int
-doNum Get s = s
-doNum (Lit a) s =  a
-doNum (Add a b) s = (doNum a s) + (doNum b s)
-doNum (Mul a b) s = (doNum a s) * (doNum b s)
-doNum (Mis a b) s = (doNum a s) - (doNum b s)
-doNum (Div a b) s = (doNum a s) `div` (doNum b s)
+doInt :: Expi -> Int -> Int
+doInt Get s = s
+doInt (Lit a) s =  a
+doInt (Add a b) s = (doInt a s) + (doInt b s)
+doInt (Mul a b) s = (doInt a s) * (doInt b s)
+doInt (Mis a b) s = (doInt a s) - (doInt b s)
+doInt (Div a b) s = (doInt a s) `div` (doInt b s)
 
 doBool :: Expb -> Int -> Bool
 doBool (Bl a) s = a
-doBool (Bln_s a b) s = (doNum a s) < (doNum b s)
-doBool (Bln_b a b) s = (doNum a s) > (doNum b s)
-doBool (Bln_q a b) s = (doNum a s) == (doNum b s)
-doBool (Bln_nq a b) s = (doNum a s) /= (doNum b s)
-doBool (Bln_sq a b) s = (doNum a s) <= (doNum b s)
-doBool (Bln_bq a b) s = (doNum a s) >= (doNum b s)
+doBool (Bli_s a b) s = (doInt a s) < (doInt b s)
+doBool (Bli_b a b) s = (doInt a s) > (doInt b s)
+doBool (Bli_q a b) s = (doInt a s) == (doInt b s)
+doBool (Bli_nq a b) s = (doInt a s) /= (doInt b s)
+doBool (Bli_sq a b) s = (doInt a s) <= (doInt b s)
+doBool (Bli_bq a b) s = (doInt a s) >= (doInt b s)
 doBool (Blb_q a b) s = (doBool a s) == (doBool b s)
 doBool (Blb_nq a b) s = (doBool a s) /= (doBool b s)
