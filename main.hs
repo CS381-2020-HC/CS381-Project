@@ -1,4 +1,4 @@
-module Main where
+module Man where
 
 import Data.List
 
@@ -22,15 +22,15 @@ data Expb = GetBool
           | Blb_q Expb Expb
           | Blb_nq Expb Expb
 
-doNum :: Num a => Expn -> a -> a
+doNum :: Expn -> Int -> Int
 doNum Get s = s
-doNum (Lit a) s = a
+doNum (Lit a) s =  a
 doNum (Add a b) s = (doNum a s) + (doNum b s)
 doNum (Mul a b) s = (doNum a s) * (doNum b s)
 doNum (Mis a b) s = (doNum a s) - (doNum b s)
-doNum (Div a b) s = (doNum a s) / (doNum b s)
+doNum (Div a b) s = (doNum a s) `div` (doNum b s)
 
-doBool :: Num a => Expb -> a -> Bool
+doBool :: Expb -> Int -> Bool
 doBool (Bl a) s = a
 doBool (Bln_s a b) s = (doNum a s) < (doNum b s)
 doBool (Bln_b a b) s = (doNum a s) > (doNum b s)
