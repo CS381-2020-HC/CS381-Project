@@ -54,3 +54,6 @@ doBool (Blb_nq a b) s = (doBool a s) /= (doBool b s)
 doCmd :: Cmd -> Int -> Int 
 doCmd (Ifelse a b c) s = if (doBool a s) then doInt b s else doInt c s
 
+doProg :: Prog -> Int -> Int
+doProg [] s = s
+doProg (x:xs) s = doProg xs (doCmd x s)
