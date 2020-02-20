@@ -2,17 +2,41 @@ module Main where
 
 import Data.List
 
-data Expi = GetInt
+data Expn = Get
           | Lit Int
-          | Add Expi Expi
-          | Mul Expi Expi
-          | Mis Expi Expi
-          | Div Expi 
+          | Flo Float
+          | Dob Double
+          | Add Expn Expn
+          | Mul Expn Expn
+          | Mis Expn Expn
+          | Div Expn Expn
 
 data Expb = GetBool
           | Bl Bool
-          | Bli Expi Expi
-          | Blb Expb Expb
+          | Bln_s Expn Expn
+          | Bln_q Expn Expn
+          | Bln_nq Expn Expn
+          | Bln_b Expn Expn
+          | Bln_sq Expn Expn
+          | Bln_bq Expn Expn
+          | Blb_q Expb Expb
+          | Blb_nq Expb Expb
 
-addInt :: Expi -> Int
-addInt = undefined
+doNum :: Num a => Expn -> a -> a
+doNum Get s = s
+doNum (Lit a) s = a
+doNum (Add a b) s = (doNum a s) + (doNum b s)
+doNum (Mul a b) s = (doNum a s) * (doNum b s)
+doNum (Mis a b) s = (doNum a s) - (doNum b s)
+doNum (Div a b) s = (doNum a s) / (doNum b s)
+
+doBool :: Num a => Expb -> a -> Bool
+doBool (Bl a) s = a
+doBool (Bln_s a b) s = (doNum a s) < (doNum b s)
+doBool (Bln_b a b) s = (doNum a s) > (doNum b s)
+doBool (Bln_q a b) s = (doNum a s) == (doNum b s)
+doBool (Bln_nq a b) s = (doNum a s) /= (doNum b s)
+doBool (Bln_sq a b) s = (doNum a s) <= (doNum b s)
+doBool (Bln_bq a b) s = (doNum a s) <= (doNum b s)
+doBool (Blb_q a b) s = (doBool a s) == (doBool b s)
+doBool (Blb_nq a b) s = (doBool a s) /= (doBool b s)
