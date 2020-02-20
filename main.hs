@@ -2,12 +2,17 @@ module Man where
 
 import Data.List
 
+type Prog = [Cmd]
+data Cmd = Ifelse Expb Expi Expi
+         deriving (Eq, Show)
+
 data Expi = Get
           | Lit Int
           | Add Expi Expi
           | Mul Expi Expi
           | Mis Expi Expi
           | Div Expi Expi
+          deriving (Eq, Show)
 
 data Expb = GetBool
           | Bl Bool
@@ -19,6 +24,7 @@ data Expb = GetBool
           | Bli_bq Expi Expi
           | Blb_q Expb Expb
           | Blb_nq Expb Expb
+          deriving (Eq, Show)
 
 test :: Expi
 test = Add (Lit 2) (Mul (Lit 6)(Lit 3))
@@ -44,3 +50,7 @@ doBool (Bli_sq a b) s = (doInt a s) <= (doInt b s)
 doBool (Bli_bq a b) s = (doInt a s) >= (doInt b s)
 doBool (Blb_q a b) s = (doBool a s) == (doBool b s)
 doBool (Blb_nq a b) s = (doBool a s) /= (doBool b s)
+
+doCmd :: Cmd -> Int -> Int 
+doCmd (Ifelse a b c) s = if (doBool a s) then doInt b s else doInt c s
+
