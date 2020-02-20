@@ -14,3 +14,5 @@ data Expb = GetBool
           | Bli Expi Expi
           | Blb Expb Expb
 
+addInt :: Expi -> Int
+addInt = undefined
