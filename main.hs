@@ -4,8 +4,6 @@ import Data.List
 
 data Expn = Get
           | Lit Int
-          | Flo Float
-          | Dob Double
           | Add Expn Expn
           | Mul Expn Expn
           | Mis Expn Expn
@@ -22,6 +20,12 @@ data Expb = GetBool
           | Blb_q Expb Expb
           | Blb_nq Expb Expb
 
+test :: Expn
+test = Add (Lit 2) (Mul (Lit 6)(Lit 3))
+
+test1 :: Expb
+test1 = Bln_b (Add (Lit 2) (Mul (Lit 6)(Lit 3))) (Lit 21)
+
 doNum :: Expn -> Int -> Int
 doNum Get s = s
 doNum (Lit a) s =  a
@@ -37,6 +41,6 @@ doBool (Bln_b a b) s = (doNum a s) > (doNum b s)
 doBool (Bln_q a b) s = (doNum a s) == (doNum b s)
 doBool (Bln_nq a b) s = (doNum a s) /= (doNum b s)
 doBool (Bln_sq a b) s = (doNum a s) <= (doNum b s)
-doBool (Bln_bq a b) s = (doNum a s) <= (doNum b s)
+doBool (Bln_bq a b) s = (doNum a s) >= (doNum b s)
 doBool (Blb_q a b) s = (doBool a s) == (doBool b s)
 doBool (Blb_nq a b) s = (doBool a s) /= (doBool b s)
