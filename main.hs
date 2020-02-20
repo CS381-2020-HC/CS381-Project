@@ -4,8 +4,6 @@ import Data.List
 
 data Expn = Get
           | Lit Int
-          | Flo Float
-          | Dob Double
           | Add Expn Expn
           | Mul Expn Expn
           | Mis Expn Expn
