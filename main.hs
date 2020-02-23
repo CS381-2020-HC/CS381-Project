@@ -11,6 +11,7 @@ data Cmd = Ifelse Expb Prog Prog
          | Operation Expi
          deriving (Eq, Show)
 
+-- the data of operation.
 data Expi = Get
           | Lit No
           | Add Expi Expi
