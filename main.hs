@@ -12,7 +12,7 @@ data Type = TInt Int
 
 type Cname = String
 type Name = String
-type Var = (Cname, Name, Type)
+type Var = (Cname, Name, Expi)
 type LeftRight = (Type, Type)
 
 data Cmd = Begin Cname [Cmd]
@@ -59,12 +59,12 @@ test1 = Bli_s (Add (Val (TInt 2)) (Mul (Val (TInt 6))(Val (TInt 3)))) (Val (TInt
 -- test2 = [For (TInt 0) (Bli_s (Val (TInt 0)) (Val (TInt 10))) (TInt 1) [ Operation (Add Get (Val (TInt (-1)))) ] ]
 
 testval :: [Var]
-testval = [("main","i",TInt 0),("main","t1",TInt 10),("main","t2",TDouble 5.8),("main","t3",TString "123"),("main","t4",TBool True)]
+testval = [("main","i",Val (TInt 0)),("main","t1",Val (TInt 10)),("main","t2",Val (TDouble 5.8)),("main","t3",Val (TString "123")),("main","t4",Val (TBool True))]
 
 testFor :: Cmd
 testFor = (For (Bli_s (Get "i") (Val (TInt 10))) 
                (TInt 1)
-               [(Set ("main", "j", (do_operation (Get "i") testval)))]
+               [(Set ("main", "j", (Add (Get "i") (Val (TString "123")))))]
                ("i")
           )
 
@@ -92,7 +92,7 @@ do_operation_IntandDouble _ a = TError
 
 findVar :: Name -> [Var] -> Type
 findVar a [] = TError
-findVar a ((d, e, f):xs) = if a == e then f else findVar a xs
+findVar a ((d, e, f):xs) = if a == e then case f of Val x -> x else findVar a xs
 
 do_operation :: Expi -> [Var] -> Type
 do_operation (Get a)            s = findVar a s
@@ -125,17 +125,18 @@ do_Bool (Bli a)      s = if a /= 0 then True else False
 
 updatelist :: Name -> Expi -> [Var] -> [Var] -> Maybe [Var]
 updatelist a b [] s = Nothing
-updatelist a b ((d,e,f):xs) s = if a == e then Just ((d,e,(do_operation b s)):xs) else case (updatelist a b xs s) of Just x -> Just ((d,e,f):(x))
-                                                                                                                     Nothing -> Nothing
+updatelist a b ((d,e,f):xs) s = if a == e then Just ((d, e, (Val (do_operation b s))):xs) else case (updatelist a b xs s) of Just x -> Just ((d,e,f):(x))
+                                                                                                                             Nothing -> Nothing
 
 doCmd :: Cmd -> [Var] -> [Var] 
-doCmd (Set a)        s = (a:s)
-doCmd (Ifelse a b c) s = if (do_Bool a s) then doProg b s 
-                         else doProg c s
-doCmd (Update a b)   s = case (updatelist a b s s) of (Just x) -> x
-                                                      (Nothing) -> s
+doCmd (Set (a, b, c)) s = let ans = do_operation c s in case ans of TError -> s
+                                                                    _ -> ((a, b, (Val (ans))):s)
+doCmd (Ifelse a b c)  s = if (do_Bool a s) then doProg b s 
+                          else doProg c s
+doCmd (Update a b)    s = case (updatelist a b s s) of (Just x) -> x
+                                                       (Nothing) -> s
 --doCmd (Operation a)  s = do_operation a s
-doCmd (For a b c d)  s = 
+doCmd (For a b c d)   s = 
     if (do_Bool a s) then 
        case a of 
            (Bli_s i j) ->  let 
