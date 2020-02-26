@@ -48,6 +48,9 @@ data Expb = GetBool
           | Blb_nq Expb Expb
           deriving (Eq, Show)
 
+testval :: [Var]
+testval = [("main","t1",TInt 10),("main","t2",TDouble 5.8),("main","t3",TString "123"),("main","t4",TBool True)]
+
 --test :: Expi
 --test = Add (Val (TInt 2)) (Mul (Val (TInt 6))(Val (TInt 3)))
 
