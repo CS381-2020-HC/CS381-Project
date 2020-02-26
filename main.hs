@@ -109,37 +109,41 @@ doCmd (Set a)        s = (a:s)
 doCmd (Ifelse a b c) s = if (do_Bool a s) then doProg b s 
                          else doProg c s
 --doCmd (Operation a)  s = do_operation a s
-doCmd (For a b c)    s = if (do_Bool a s) then case a of (Bli_s i j) -> let 
-                                                                           result = (doProg c s) 
-                                                                           add = do_operation_IntandDouble (i, b) Plus
-                                                                        in 
-                                                                           doCmd (For (Bli_s (Val add) j) b c) result
-                                                         (Bli_q i j) -> let 
-                                                                           result = (doProg c s) 
-                                                                           add = do_operation_IntandDouble (i, b) Plus
-                                                                        in 
-                                                                           doCmd (For (Bli_q (Val add) j) b c) result
-                                                         (Bli_nq i j) ->  let 
-                                                                           result = (doProg c s) 
-                                                                           add = do_operation_IntandDouble (i, b) Plus
-                                                                        in 
-                                                                           doCmd (For (Bli_nq (Val add) j) b c) result
-                                                         (Bli_b i j) -> let 
-                                                                           result = (doProg c s) 
-                                                                           add = do_operation_IntandDouble (i, b) Plus
-                                                                        in 
-                                                                           doCmd (For (Bli_b (Val add) j) b c) result
-                                                         (Bli_sq i j) -> let 
-                                                                           result = (doProg c s) 
-                                                                           add = do_operation_IntandDouble (i, b) Plus
-                                                                        in 
-                                                                           doCmd (For (Bli_sq (Val add) j) b c) result
-                                                         (Bli_bq i j) -> let 
-                                                                           result = (doProg c s) 
-                                                                           add = do_operation_IntandDouble (i, b) Plus
-                                                                        in 
-                                                                           doCmd (For (Bli_bq (Val add) j) b c) result
-                        else s
+doCmd (For a b c)    s = 
+    if (do_Bool a s) then 
+       case a of 
+           (Bli_s i j) ->  let 
+                             result = (doProg c s) 
+                             add = do_operation_IntandDouble (i, b) Plus
+                           in 
+                             doCmd (For (Bli_s (Val add) j) b c) result
+           (Bli_q i j) ->  let 
+                               result = (doProg c s) 
+                               add = do_operation_IntandDouble (i, b) Plus
+                           in 
+                               doCmd (For (Bli_q (Val add) j) b c) result
+           (Bli_nq i j) -> let 
+                               result = (doProg c s) 
+                               add = do_operation_IntandDouble (i, b) Plus
+                           in 
+                               doCmd (For (Bli_nq (Val add) j) b c) result
+           (Bli_b i j) ->  let 
+                               result = (doProg c s) 
+                               add = do_operation_IntandDouble (i, b) Plus
+                           in 
+                               doCmd (For (Bli_b (Val add) j) b c) result
+           (Bli_sq i j) -> let 
+                               result = (doProg c s) 
+                               add = do_operation_IntandDouble (i, b) Plus
+                           in 
+                               doCmd (For (Bli_sq (Val add) j) b c) result
+           (Bli_bq i j) -> let 
+                               result = (doProg c s) 
+                               add = do_operation_IntandDouble (i, b) Plus
+                           in 
+                               doCmd (For (Bli_bq (Val add) j) b c) result
+    else s
+>>>>>>> 87db26baeff391a54c5e0300e6c3e2e9becf9015
 
 doProg :: Prog -> [Var] -> [Var]
 doProg [] s = s
