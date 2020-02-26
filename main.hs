@@ -59,7 +59,14 @@ test1 = Bli_s (Add (Val (TInt 2)) (Mul (Val (TInt 6))(Val (TInt 3)))) (Val (TInt
 -- test2 = [For (TInt 0) (Bli_s (Val (TInt 0)) (Val (TInt 10))) (TInt 1) [ Operation (Add Get (Val (TInt (-1)))) ] ]
 
 testval :: [Var]
-testval = [("main","t1",TInt 10),("main","t2",TDouble 5.8),("main","t3",TString "123"),("main","t4",TBool True)]
+testval = [("main","i",TInt 0),("main","t1",TInt 10),("main","t2",TDouble 5.8),("main","t3",TString "123"),("main","t4",TBool True)]
+
+testFor :: Cmd
+testFor = (For (Bli_s (Get "i") (Val (TInt 10))) 
+               (TInt 1)
+               [(Set ("main", "j", (do_operation (Get "i") testval)))]
+               ("i")
+          )
 
 --test :: Expi
 --test = Add (Val (TInt 2)) (Mul (Val (TInt 6))(Val (TInt 3)))
