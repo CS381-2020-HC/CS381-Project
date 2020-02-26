@@ -116,10 +116,17 @@ do_Bool (Bli a)      s = if a /= 0 then True else False
 --do_Bool (Blb_nq a b) s = (do_Bool a s) /= (do_Bool b s)
 
 
+updatelist :: Name -> Expi -> [Var] -> [Var] -> Maybe [Var]
+updatelist a b [] s = Nothing
+updatelist a b ((d,e,f):xs) s = if a == e then Just ((d,e,(do_operation b s)):xs) else case (updatelist a b xs s) of Just x -> Just ((d,e,f):(x))
+                                                                                                                     Nothing -> Nothing
+
 doCmd :: Cmd -> [Var] -> [Var] 
 doCmd (Set a)        s = (a:s)
 doCmd (Ifelse a b c) s = if (do_Bool a s) then doProg b s 
                          else doProg c s
+doCmd (Update a b)   s = case (updatelist a b s s) of (Just x) -> x
+                                                      (Nothing) -> s
 --doCmd (Operation a)  s = do_operation a s
 doCmd (For a b c d)  s = 
     if (do_Bool a s) then 
