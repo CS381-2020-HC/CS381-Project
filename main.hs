@@ -15,12 +15,13 @@ type Name = String
 type Var = (Cname, Name, Expi)
 type LeftRight = (Type, Type)
 
-data Cmd = Begin Cname [Cmd]
+data Cmd = Begin Cname
          | End Cname
-         | Set Var
+         | Set (Name, Expi)
          | Update Name Expi
          | Ifelse Expb Prog Prog
          | For Expb Type Prog Name
+         | Print Name
          | Operation Expi
          deriving (Eq, Show)
 
@@ -64,7 +65,7 @@ testval = [("main","i",Val (TInt 0)),("main","t1",Val (TInt 10)),("main","t2",Va
 testFor :: Cmd
 testFor = (For (Bli_s (Get "i") (Val (TInt 10))) 
                (TInt 1)
-               [(Set ("main", "j", (Add (Get "i") (Val (TString "123")))))]
+               [(Set ("j", (Add (Get "i") (Val (TInt 1)))))]
                ("i")
           )
 
@@ -128,59 +129,65 @@ updatelist a b [] s = Nothing
 updatelist a b ((d,e,f):xs) s = if a == e then Just ((d, e, (Val (do_operation b s))):xs) else case (updatelist a b xs s) of Just x -> Just ((d,e,f):(x))
                                                                                                                              Nothing -> Nothing
 
-doCmd :: Cmd -> [Var] -> [Var] 
-doCmd (Set (a, b, c)) s = let ans = do_operation c s in case ans of TError -> s
-                                                                    _ -> ((a, b, (Val (ans))):s)
-doCmd (Ifelse a b c)  s = if (do_Bool a s) then doProg b s 
-                          else doProg c s
-doCmd (Update a b)    s = case (updatelist a b s s) of (Just x) -> x
-                                                       (Nothing) -> s
+doCmd :: Cmd -> [Var] -> Cname -> [Var] 
+doCmd (Set (a, b))    s n = let ans = do_operation b s in case ans of TError -> s
+                                                                      _ -> ((n, a, (Val (ans))):s)
+doCmd (Ifelse a b c)  s n = if (do_Bool a s) then doProg b s n
+                            else doProg c s n
+doCmd (Update a b)    s n = case (updatelist a b s s) of (Just x) -> x
+                                                         (Nothing) -> s
 --doCmd (Operation a)  s = do_operation a s
-doCmd (For a b c d)   s = 
+doCmd (For a b c d)   s n = 
     if (do_Bool a s) then 
        case a of 
            (Bli_s i j) ->  let 
-                             result = (doProg c s)
+                             result = (doProg c s n)
                              add = do_operation_IntandDouble ((do_operation i result), b) Plus
-                             newresult = doCmd (Update d (Val add)) result
+                             newresult = doCmd (Update d (Val add)) result n
                            in 
-                             doCmd (For (Bli_s i j) b c d) newresult
+                             doCmd (For (Bli_s i j) b c d) newresult n
            (Bli_q i j) ->  let 
-                              result = (doProg c s)
+                              result = (doProg c s n)
                               add = do_operation_IntandDouble ((do_operation i result), b) Plus
-                              newresult = doCmd (Update d (Val add)) result
+                              newresult = doCmd (Update d (Val add)) result n
                            in 
-                              doCmd (For (Bli_q i j) b c d) newresult
+                              doCmd (For (Bli_q i j) b c d) newresult n
            (Bli_nq i j) -> let 
-                              result = (doProg c s)
+                              result = (doProg c s n)
                               add = do_operation_IntandDouble ((do_operation i result), b) Plus
-                              newresult = doCmd (Update d (Val add)) result
+                              newresult = doCmd (Update d (Val add)) result n
                            in 
-                              doCmd (For (Bli_nq i j) b c d) newresult
+                              doCmd (For (Bli_nq i j) b c d) newresult n
            (Bli_b i j) ->  let 
-                              result = (doProg c s)
+                              result = (doProg c s n)
                               add = do_operation_IntandDouble ((do_operation i result), b) Plus
-                              newresult = doCmd (Update d (Val add)) result
+                              newresult = doCmd (Update d (Val add)) result n
                            in 
-                              doCmd (For (Bli_b i j) b c d) newresult
+                              doCmd (For (Bli_b i j) b c d) newresult n
            (Bli_sq i j) -> let 
-                              result = (doProg c s)
+                              result = (doProg c s n)
                               add = do_operation_IntandDouble ((do_operation i result), b) Plus
-                              newresult = doCmd (Update d (Val add)) result   
+                              newresult = doCmd (Update d (Val add)) result  n  
                            in 
-                              doCmd (For (Bli_sq i j) b c d) newresult
+                              doCmd (For (Bli_sq i j) b c d) newresult n
            (Bli_bq i j) -> let 
-                              result = (doProg c s)
+                              result = (doProg c s n)
                               add = do_operation_IntandDouble ((do_operation i result), b) Plus
-                              newresult = doCmd (Update d (Val add)) result
+                              newresult = doCmd (Update d (Val add)) result n
                            in 
-                              doCmd (For (Bli_bq i j) b c d) newresult
+                              doCmd (For (Bli_bq i j) b c d) newresult n
     else s
 
-doProg :: Prog -> [Var] -> [Var]
-doProg [] s = s
-doProg (x:xs) s = doProg xs (doCmd x s)
+remove_function_val :: Cname -> [Var] -> (Cname, [Var])
+remove_function_val a []             = (a, [])
+remove_function_val a ((b, c, d):xs) = if a == b then remove_function_val a xs
+                                       else (b, ((b, c, d):xs))
 
+doProg :: Prog -> [Var] -> Cname -> [Var]
+doProg []             s n = s
+doProg (x:xs)         s n = doProg xs (doCmd x s n) n
+doProg ((Begin a):xs) s n = doProg xs s a
+doProg ((End a):xs)   s n = let (nn, ns) = (remove_function_val a s) in doProg xs ns nn
 
 
 
