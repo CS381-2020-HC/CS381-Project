@@ -55,8 +55,8 @@ test = Add (Val (TInt 2)) (Mul (Val (TInt 6))(Val (TInt 3)))
 test1 :: Expb
 test1 = Bli_s (Add (Val (TInt 2)) (Mul (Val (TInt 6))(Val (TInt 3)))) (Val (TInt 21))
 
-test2 :: Prog
-test2 = [For (TInt 0) (Bli_s (Val (TInt 0)) (Val (TInt 10))) (TInt 1) [ Operation (Add Get (Val (TInt (-1)))) ] ]
+-- test2 :: Prog
+-- test2 = [For (TInt 0) (Bli_s (Val (TInt 0)) (Val (TInt 10))) (TInt 1) [ Operation (Add Get (Val (TInt (-1)))) ] ]
 
 testval :: [Var]
 testval = [("main","t1",TInt 10),("main","t2",TDouble 5.8),("main","t3",TString "123"),("main","t4",TBool True)]
