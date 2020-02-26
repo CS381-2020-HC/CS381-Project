@@ -20,7 +20,7 @@ data Cmd = Begin Cname [Cmd]
          | Set Var
          | Update Var Expi
          | Ifelse Expb Prog Prog
-         | For Type Expb Type Prog
+         | For Expb Type Prog
          | Operation Expi
          deriving (Eq, Show)
 
@@ -114,27 +114,27 @@ doCmd (For a b c)    s = if (do_Bool a s) then case a of (Bli_s i j) -> let
                                                                            add = do_operation_IntandDouble (i, b) Plus
                                                                         in 
                                                                            doCmd (For (Bli_s (Val add) j) b c) result
-                                                       (Bli_q i j) ->   let 
+                                                         (Bli_q i j) -> let 
                                                                            result = (doProg c s) 
                                                                            add = do_operation_IntandDouble (i, b) Plus
                                                                         in 
                                                                            doCmd (For (Bli_q (Val add) j) b c) result
-                                                       (Bli_nq i j) ->  let 
+                                                         (Bli_nq i j) ->  let 
                                                                            result = (doProg c s) 
                                                                            add = do_operation_IntandDouble (i, b) Plus
                                                                         in 
                                                                            doCmd (For (Bli_nq (Val add) j) b c) result
-                                                       (Bli_b i j) ->   let 
+                                                         (Bli_b i j) -> let 
                                                                            result = (doProg c s) 
                                                                            add = do_operation_IntandDouble (i, b) Plus
                                                                         in 
                                                                            doCmd (For (Bli_b (Val add) j) b c) result
-                                                       (Bli_sq i j) ->  let 
+                                                         (Bli_sq i j) -> let 
                                                                            result = (doProg c s) 
                                                                            add = do_operation_IntandDouble (i, b) Plus
                                                                         in 
                                                                            doCmd (For (Bli_sq (Val add) j) b c) result
-                                                       (Bli_bq i j) ->  let 
+                                                         (Bli_bq i j) -> let 
                                                                            result = (doProg c s) 
                                                                            add = do_operation_IntandDouble (i, b) Plus
                                                                         in 
