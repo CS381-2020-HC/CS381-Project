@@ -48,11 +48,17 @@ data Expb = GetBool
           | Blb_nq Expb Expb
           deriving (Eq, Show)
 
---test :: Expi
---test = Add (Val (TInt 2)) (Mul (Val (TInt 6))(Val (TInt 3)))
+test :: Expi
+test = Add (Val (TInt 2)) (Mul (Val (TInt 6))(Val (TInt 3)))
 
---test1 :: Expb
---test1 = Bli_s (Add (Val (TInt 2)) (Mul (Val (TInt 6))(Val (TInt 3)))) (Val (TInt 20))
+test1 :: Expb
+test1 = Bli_s (Add (Val (TInt 2)) (Mul (Val (TInt 6))(Val (TInt 3)))) (Val (TInt 21))
+
+test2 :: Prog
+test2 = [For (TInt 0) (Bli_s (Val (TInt 0)) (Val (TInt 10))) (TInt 1) [ Operation (Add Get (Val (TInt (-1)))) ] ]
+
+testSet :: 
+
 
 do_operation_IntandDouble :: LeftRight -> Expm -> Type
 do_operation_IntandDouble (TInt a, TInt b) Plus = TInt (a + b) 
@@ -105,8 +111,6 @@ do_Bool (Bli a)      s = if a /= 0 then True else False
 --do_Bool (Blb_q a b) s = (do_Bool a s) == (do_Bool b s)
 --do_Bool (Blb_nq a b) s = (do_Bool a s) /= (do_Bool b s)
 
--- test2 :: Prog
--- test2 = [For (TInt 0) (Bli_s (Val (TInt 0)) (Val (TInt 10))) (TInt 1) [ Operation (Add Get (Val (TInt (-1)))) ] ]
 
 doCmd :: Cmd -> [Var] -> [Var] 
 doCmd (Set a)        s = (a:s)
