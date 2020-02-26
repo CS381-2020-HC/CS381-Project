@@ -185,9 +185,9 @@ remove_function_val a ((b, c, d):xs) = if a == b then remove_function_val a xs
 
 doProg :: Prog -> [Var] -> Cname -> [Var]
 doProg []             s n = s
-doProg (x:xs)         s n = doProg xs (doCmd x s n) n
 doProg ((Begin a):xs) s n = doProg xs s a
 doProg ((End a):xs)   s n = let (nn, ns) = (remove_function_val a s) in doProg xs ns nn
+doProg (x:xs)         s n = doProg xs (doCmd x s n) n
 
 
 
