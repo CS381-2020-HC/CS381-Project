@@ -172,7 +172,7 @@ doCmd (For a b c d)   s n =
                               add = do_operation_IntandDouble ((do_operation i result), c) Plus
                               newresult = doCmd (Update (n, a, (Val add))) result n
                            in 
-                              doCmd (For a (Bli_s i j) c d) newresult n
+                              doCmd (For a (Bli_q i j) c d) newresult n
            (Bli_nq i j) -> let 
                               result = (doProg d s n)
                               add = do_operation_IntandDouble ((do_operation i result), c) Plus
