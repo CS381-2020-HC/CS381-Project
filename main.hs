@@ -20,7 +20,7 @@ data Cmd = Begin Cname
          | Set (Name, Expi)
          | Update Var
          | Ifelse Expb Prog Prog
-         | For Expb Type Prog Name
+         | For Name Expb Type Prog
          | Print Name
          | Operation Expi
          deriving (Eq, Show)
@@ -63,10 +63,10 @@ testval :: [Var]
 testval = [("main","i",Val (TInt 0)),("main","t1",Val (TInt 10)),("main","t2",Val (TDouble 5.8)),("main","t3",Val (TString "123")),("main","t4",Val (TBool True))]
 
 testFor :: Cmd
-testFor = (For (Bli_s (Get "i") (Val (TInt 10))) 
+testFor = (For ("i")
+               (Bli_s (Get "i") (Val (TInt 10))) 
                (TInt 1)
-               [(Set ("j", (Add (Get "i") (Val (TInt 1)))))]
-               ("i")
+               [(Set ("j", (Add (Get "i") (Val (TInt 1)))))] 
           )
 
 testset :: Prog
@@ -153,44 +153,44 @@ doCmd (Update (a, b, c))    s n = case (updatelist (a, b, c) s s) of (Just x) ->
                                                                      (Nothing) -> error ("Value name " ++ b ++ " not in function " ++ n ++ " value list.")
 --doCmd (Operation a)  s = do_operation a s
 doCmd (For a b c d)   s n = 
-    if (do_Bool a s) then 
-       case a of 
+    if (do_Bool b s) then 
+       case b of 
            (Bli_s i j) ->  let 
-                             result = (doProg c s n)
-                             add = do_operation_IntandDouble ((do_operation i result), b) Plus
-                             newresult = doCmd (Update (n, d, (Val add))) result n
+                             result = (doProg d s n)
+                             add = do_operation_IntandDouble ((do_operation i result), c) Plus
+                             newresult = doCmd (Update (n, a, (Val add))) result n
                            in 
-                             doCmd (For (Bli_s i j) b c d) newresult n
+                             doCmd (For a (Bli_s i j) c d) newresult n
            (Bli_q i j) ->  let 
-                              result = (doProg c s n)
-                              add = do_operation_IntandDouble ((do_operation i result), b) Plus
-                              newresult = doCmd (Update (n, d, (Val add))) result n
+                              result = (doProg d s n)
+                              add = do_operation_IntandDouble ((do_operation i result), c) Plus
+                              newresult = doCmd (Update (n, a, (Val add))) result n
                            in 
-                              doCmd (For (Bli_q i j) b c d) newresult n
+                              doCmd (For a (Bli_s i j) c d) newresult n
            (Bli_nq i j) -> let 
-                              result = (doProg c s n)
-                              add = do_operation_IntandDouble ((do_operation i result), b) Plus
-                              newresult = doCmd (Update (n, d, (Val add))) result n
+                              result = (doProg d s n)
+                              add = do_operation_IntandDouble ((do_operation i result), c) Plus
+                              newresult = doCmd (Update (n, a, (Val add))) result n
                            in 
-                              doCmd (For (Bli_nq i j) b c d) newresult n
+                              doCmd (For a (Bli_nq i j) c d) newresult n
            (Bli_b i j) ->  let 
-                              result = (doProg c s n)
-                              add = do_operation_IntandDouble ((do_operation i result), b) Plus
-                              newresult = doCmd (Update (n, d, (Val add))) result n
+                              result = (doProg d s n)
+                              add = do_operation_IntandDouble ((do_operation i result), c) Plus
+                              newresult = doCmd (Update (n, a, (Val add))) result n
                            in 
-                              doCmd (For (Bli_b i j) b c d) newresult n
+                              doCmd (For a (Bli_b i j) c d) newresult n
            (Bli_sq i j) -> let 
-                              result = (doProg c s n)
-                              add = do_operation_IntandDouble ((do_operation i result), b) Plus
-                              newresult = doCmd (Update (n, d, (Val add))) result  n  
+                              result = (doProg d s n)
+                              add = do_operation_IntandDouble ((do_operation i result), c) Plus
+                              newresult = doCmd (Update (n, a, (Val add))) result  n  
                            in 
-                              doCmd (For (Bli_sq i j) b c d) newresult n
+                              doCmd (For a (Bli_sq i j) c d) newresult n
            (Bli_bq i j) -> let 
-                              result = (doProg c s n)
-                              add = do_operation_IntandDouble ((do_operation i result), b) Plus
-                              newresult = doCmd (Update (n, d, (Val add))) result n
+                              result = (doProg d s n)
+                              add = do_operation_IntandDouble ((do_operation i result), c) Plus
+                              newresult = doCmd (Update (n, a, (Val add))) result n
                            in 
-                              doCmd (For (Bli_bq i j) b c d) newresult n
+                              doCmd (For a (Bli_bq i j) c d) newresult n
     else s
 
 remove_function_val :: Cname -> [Var] -> (Cname, [Var])
