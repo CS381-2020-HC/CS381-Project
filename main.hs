@@ -1,61 +1,86 @@
 module Man where
+-- At First we use Main for module name, but it will get wrong so we change to this name.
 
 import Data.List
 
+-- Prog is the type of list Cmd.
 type Prog = [Cmd]
-data Type = TInt Int 
-          | TDouble Double
-          | TString String
-          | TBool Bool
-          | TError
+
+-- Define a Type data for the Int, Double, String, Bool.
+-- We put the Float type and Double type together.
+data Type = TInt Int         -- Int
+          | TDouble Double   -- Float and Double
+          | TString String   -- String
+          | TBool Bool       -- Bool
+          | TError           -- not designe yet.
           deriving (Eq, Show)
 
-type Cname = String
-type Name = String
-type Var = (Cname, Name, Expi)
-type LeftRight = (Type, Type)
+-- Fname is the Function Name.
+type Fname = String
 
-data Cmd = Begin Cname
-         | End Cname
+-- Name is the value name.
+type Name = String
+
+-- Define the value list base type, and it include Function name, value name, and the Expi type to do the operation.
+type Var = (Fname, Name, Expi)
+
+-- This type will change the name in the fucture.
+-- This type just for know the two value type in do_operation_IntandDouble.
+type LeftRight = (Type, Type)  -- will rewrite the type name
+
+-- Define the Cmd data.
+-- Begin and End is to call new function and End the function.
+-- Set and Update is do the same thing but set is for define a value in value list, and
+-- Update is to change the value list value.
+-- Ifelse have a condiction if True do the first Prog else do the second Prog.
+-- For is to do the the same thing multiple time, but you need to define value it used before.
+-- while is do the thing until the condiction is false.
+-- Print is to show something.
+data Cmd = Begin Fname
+         | End Fname
          | Set (Name, Expi)
          | Update Var
          | Ifelse Expb Prog Prog
          | For Name Expb Type Prog
          | While Expb Prog
          | Print Name
-         | Operation Expi
+         | Operation Expi -- could remove.
          deriving (Eq, Show)
 
 -- the data of operation.
+-- Get is to get the value call Name in value list.
+-- Val is the value which you can do the operation.
 data Expi = Get Name
           | Val Type
-          | Add Expi Expi
-          | Mul Expi Expi
-          | Mis Expi Expi
-          | Div Expi Expi
+          | Add Expi Expi    -- +
+          | Mul Expi Expi    -- -
+          | Mis Expi Expi    -- *
+          | Div Expi Expi    -- /
           deriving (Eq, Show)
 
+-- We give the name for do the operation for +,-,*,/ by create data type.
 data Expm = Plus | Minus | Multiply | Divide
   deriving (Eq, Show)
 
+-- Expb is the condiction.
 data Expb = GetBool 
-          | Bli Int --need rewrite
-          | Bli_s Expi Expi
-          | Bli_q Expi Expi
-          | Bli_nq Expi Expi
-          | Bli_b Expi Expi
-          | Bli_sq Expi Expi
-          | Bli_bq Expi Expi
-          | Blb_q Expb Expb
-          | Blb_nq Expb Expb
+          | Bli Int           -- Will rewrite
+          | Bli_s Expi Expi   -- Left Smaller then Right.
+          | Bli_q Expi Expi   -- Left Equal with Right.
+          | Bli_nq Expi Expi  -- Left not Equal with Right.
+          | Bli_b Expi Expi   -- Left Bigger then Right.
+          | Bli_sq Expi Expi  -- Left Smaller and Equal then Right.
+          | Bli_bq Expi Expi  -- Left Bigger and Equal then Right.
+          | Blb_q Expb Expb   -- Will Remove
+          | Blb_nq Expb Expb  -- Will Remove
           deriving (Eq, Show)
 
 
-test :: Expi
-test = Add (Val (TInt 2)) (Mul (Val (TInt 6))(Val (TInt 3)))
+testoperation :: Expi
+testoperation = Add (Val (TInt 2)) (Mul (Val (TInt 6))(Val (TInt 3)))
 
-test1 :: Expb
-test1 = Bli_s (Add (Val (TInt 2)) (Mul (Val (TInt 6))(Val (TInt 3)))) (Val (TInt 21))
+testcondiction :: Expb
+testcondiction = Bli_s (Add (Val (TInt 2)) (Mul (Val (TInt 6))(Val (TInt 3)))) (Val (TInt 21))
 
 -- test2 :: Prog
 -- test2 = [For (TInt 0) (Bli_s (Val (TInt 0)) (Val (TInt 10))) (TInt 1) [ Operation (Add Get (Val (TInt (-1)))) ] ]
@@ -150,11 +175,11 @@ updatelist (a, b, c) ((d,e,f):xs) s = if a == d && b == e then Just ((d, e, (Val
                                       else case (updatelist (a, b, c) xs s) of Just x -> Just ((d,e,f):(x))
                                                                                Nothing -> Nothing
 
-checkset :: (Cname, Name) -> [Var] -> Bool
+checkset :: (Fname, Name) -> [Var] -> Bool
 checkset a      []              = False
 checkset (a, b) ((d, e, f):xs)  = if a == d && b == e then True else checkset (a, b) xs
 
-doCmd :: Cmd -> [Var] -> Cname -> [Var] 
+doCmd :: Cmd -> [Var] -> Fname -> [Var] 
 doCmd (Set (a, b))    s n = if (checkset (n, a) s) then error ("Name : " ++ a ++ " in " ++ n ++ " value list. " ++ "Set command can not allow same name in sam function name.")
                             else let 
                                     ans = do_operation b s 
@@ -236,19 +261,13 @@ doCmd (While b d) s n =
                               doCmd (While (Bli_bq i j) d) result n
     else s
 
-remove_function_val :: Cname -> [Var] -> (Cname, [Var])
+remove_function_val :: Fname -> [Var] -> (Fname, [Var])
 remove_function_val a []             = (a, [])
 remove_function_val a ((b, c, d):xs) = if a == b then remove_function_val a xs
                                        else (b, ((b, c, d):xs))
 
-doProg :: Prog -> [Var] -> Cname -> [Var]
+doProg :: Prog -> [Var] -> Fname -> [Var]
 doProg []             s n = s
 doProg ((Begin a):xs) s n = doProg xs s a
 doProg ((End a):xs)   s n = let (nn, ns) = (remove_function_val a s) in doProg xs ns nn
 doProg (x:xs)         s n = doProg xs (doCmd x s n) n
-
-
-
-
-
-
