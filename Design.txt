@@ -1,10 +1,27 @@
 Introduction
-    The name of this language is Haskell-C, which paradigm based on imperative languages, specifically on C language but not entirely. Notably, the scope and lifetime of the variable, which is one of the most typical features for C language, have been implemented in it.
+    The name of this language is Haskell-C, which paradigm based on imperative languages, 
+specifically on C language but not entirely. Notably, the scope and lifetime of the variable, 
+which is one of the most typical features for C language, have been implemented in it.
 
 Design
-    This language has implemented the first four features on the menu. First, three data types, consisting of the boolean value, integer number, and double-precision floating-point number, have been implemented with four kinds of mathematical operations and six types of comparison operations. Second, the conditional feature has been applied, which is similar to the form "if-then-else". Third, there are two types of loop methods, including "for" loop and "while" loop, which are also similar to C language. Finally, the mutable variable and immutable local variable are both implemented with the scope and lifetime.
-    Furthermore, all features of this language except the loop feature are the core level, while the loop feature is the syntactic sugar level because it can choose whether "for" loop or "while" loop to program; however, other features are all unique.
-    In addition, this language is type-safe that not only the static type errors can be detected at compile time but also the dynamic type errors can be reported at runtime. Such that all of these errors will be dealt with through the error print or "Nothing" result of Maybe type. Therefore, there is no undefined operation that happened during runtime.
+    This language has implemented the first four features on the menu. First, three data types, 
+consisting of the boolean value, integer number, and double-precision floating-point number, 
+have been implemented with four kinds of mathematical operations and six types of comparison 
+operations. Second, the conditional feature has been applied, which is similar to the form 
+"if-then-else". Third, there are two types of loop methods, including "for" loop and "while" 
+loop, which are also similar to C language. Finally, the mutable variable and immutable local 
+variable are both implemented with the scope and lifetime.
+    Furthermore, all features of this language except the loop feature are the core level, 
+while the loop feature is the syntactic sugar level because it can choose whether "for" loop or 
+"while" loop to program; however, other features are all unique.
+    In addition, this language is type-safe that not only the static type errors can be detected 
+at compile time but also the dynamic type errors can be reported at runtime. Such that all of 
+these errors will be dealt with through the error print or "Nothing" result of Maybe type. 
+Therefore, there is no undefined operation that happened during runtime.
 
 Implementation
-    There are three types of semantic domains chosen by this language, including the list of command; the variable consisting of scope name, variable name, and value; and the pair of two data types. Moreover, the most interesting aspect of it is the scope and lifetime of the variable because it can make this language support the local variable with the same name to the global variable. 
+    There are three types of semantic domains chosen by this language, including the list of 
+command; the variable consisting of scope name, variable name, and value; and the pair of two 
+data types. Moreover, the most interesting aspect of it is the scope and lifetime of the 
+variable because it can make this language support the local variable with the same name to the 
+global variable. 
