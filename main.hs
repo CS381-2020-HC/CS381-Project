@@ -21,7 +21,7 @@ data Cmd = Begin Cname
          | Update Var
          | Ifelse Expb Prog Prog
          | For Name Expb Type Prog
-         | While Expb Name
+         | While Expb Prog
          | Print Name
          | Operation Expi
          deriving (Eq, Show)
@@ -192,6 +192,35 @@ doCmd (For a b c d)   s n =
                               newresult = doCmd (Update (n, a, (Val add))) result n
                            in 
                               doCmd (For a (Bli_bq i j) c d) newresult n
+    else s
+
+doCmd (while b d) s n =
+    if (do_Bool b s) then 
+       case b of 
+           (Bli_s i j) ->  let 
+                             result = (doProg d s n)
+                           in 
+                             doCmd (While (Bli_s i j) d) result n
+           (Bli_q i j) ->  let 
+                              result = (doProg d s n)
+                           in 
+                              doCmd (While (Bli_s i j) d) result n
+           (Bli_nq i j) -> let 
+                              result = (doProg d s n)
+                           in 
+                              doCmd (While (Bli_nq i j) d) result n
+           (Bli_b i j) ->  let 
+                              result = (doProg d s n)
+                           in 
+                              doCmd (While a (Bli_b i j) d) result n
+           (Bli_sq i j) -> let 
+                              result = (doProg d s n)
+                           in 
+                              doCmd (While a (Bli_sq i j) d) result n
+           (Bli_bq i j) -> let 
+                              result = (doProg d s n)
+                           in 
+                              doCmd (While a (Bli_bq i j) d) result n
     else s
 
 remove_function_val :: Cname -> [Var] -> (Cname, [Var])
