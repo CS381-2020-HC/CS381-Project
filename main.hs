@@ -18,7 +18,7 @@ type LeftRight = (Type, Type)
 data Cmd = Begin Cname
          | End Cname
          | Set (Name, Expi)
-         | Update Name Expi
+         | Update Var
          | Ifelse Expb Prog Prog
          | For Expb Type Prog Name
          | Print Name
@@ -69,6 +69,12 @@ testFor = (For (Bli_s (Get "i") (Val (TInt 10)))
                ("i")
           )
 
+testset :: Prog
+testset = [(Set ("j", (Add (Get "i") (Val (TInt 1))))),(Set ("j", (Add (Get "i") (Val (TInt 1))))),(Set ("j", (Add (Get "i") (Val (TInt 1)))))]
+
+testadd :: Type
+testadd = do_operation_IntandDouble ((do_operation (Get "i") (doProg testset testval "For")), (TInt 1)) Plus
+
 --test :: Expi
 --test = Add (Val (TInt 2)) (Mul (Val (TInt 6))(Val (TInt 3)))
 
@@ -89,16 +95,16 @@ do_operation_IntandDouble (TInt a, TInt b) Divide = TInt (a `div` b)
 do_operation_IntandDouble (TDouble a, TDouble b) Divide = TDouble (a / b)
 do_operation_IntandDouble (TInt a, TDouble b) Divide = TDouble ((fromIntegral a) / b)
 do_operation_IntandDouble (TDouble a, TInt b) Divide = TDouble (a / (fromIntegral b))
-do_operation_IntandDouble _ a = TError
+do_operation_IntandDouble _ a = error "Can not match tyoe Int or Double."
 
 findVar :: Name -> [Var] -> Type
-findVar a [] = TError
+findVar a [] = error ("Can not find the name " ++ a ++ " in value list.")
 findVar a ((d, e, f):xs) = if a == e then case f of Val x -> x else findVar a xs
 
 do_operation :: Expi -> [Var] -> Type
 do_operation (Get a)            s = findVar a s
-do_operation (Val (TString _ )) s = TError
-do_operation (Val (TBool _ ))   s = TError
+do_operation (Val (TString _ )) s = error "do_operation function can not allow String type."
+do_operation (Val (TBool _ ))   s = error "do_operation function can not allow Bool type."
 do_operation (Val a)            s = a
 do_operation (Add a b)          s = do_operation_IntandDouble ((do_operation a s), (do_operation b s)) Plus        
 do_operation (Mul a b)          s = do_operation_IntandDouble ((do_operation a s), (do_operation b s)) Multiply       
@@ -124,18 +130,27 @@ do_Bool (Bli a)      s = if a /= 0 then True else False
 --do_Bool (Blb_nq a b) s = (do_Bool a s) /= (do_Bool b s)
 
 
-updatelist :: Name -> Expi -> [Var] -> [Var] -> Maybe [Var]
-updatelist a b [] s = Nothing
-updatelist a b ((d,e,f):xs) s = if a == e then Just ((d, e, (Val (do_operation b s))):xs) else case (updatelist a b xs s) of Just x -> Just ((d,e,f):(x))
-                                                                                                                             Nothing -> Nothing
+updatelist :: Var -> [Var] -> [Var] -> Maybe [Var]
+updatelist a         []           s = Nothing
+updatelist (a, b, c) ((d,e,f):xs) s = if a == d && b == e then Just ((d, e, (Val (do_operation c s))):xs) 
+                                      else case (updatelist (a, b, c) xs s) of Just x -> Just ((d,e,f):(x))
+                                                                               Nothing -> Nothing
+
+checkset :: (Cname, Name) -> [Var] -> Bool
+checkset a      []              = False
+checkset (a, b) ((d, e, f):xs)  = if a == d && b == e then True else checkset (a, b) xs
 
 doCmd :: Cmd -> [Var] -> Cname -> [Var] 
-doCmd (Set (a, b))    s n = let ans = do_operation b s in case ans of TError -> s
-                                                                      _ -> ((n, a, (Val (ans))):s)
+doCmd (Set (a, b))    s n = if (checkset (n, a) s) then error ("Name : " ++ a ++ " in " ++ n ++ " value list. " ++ "Set command can not allow same name in sam function name.")
+                            else let 
+                                    ans = do_operation b s 
+                                 in 
+                                    ((n, a, (Val (ans))):s)
+                                                        
 doCmd (Ifelse a b c)  s n = if (do_Bool a s) then doProg b s n
                             else doProg c s n
-doCmd (Update a b)    s n = case (updatelist a b s s) of (Just x) -> x
-                                                         (Nothing) -> s
+doCmd (Update (a, b, c))    s n = case (updatelist (a, b, c) s s) of (Just x) -> x
+                                                                     (Nothing) -> error ("Value name " ++ b ++ " not in function " ++ n ++ " value list.")
 --doCmd (Operation a)  s = do_operation a s
 doCmd (For a b c d)   s n = 
     if (do_Bool a s) then 
@@ -143,37 +158,37 @@ doCmd (For a b c d)   s n =
            (Bli_s i j) ->  let 
                              result = (doProg c s n)
                              add = do_operation_IntandDouble ((do_operation i result), b) Plus
-                             newresult = doCmd (Update d (Val add)) result n
+                             newresult = doCmd (Update (n, d, (Val add))) result n
                            in 
                              doCmd (For (Bli_s i j) b c d) newresult n
            (Bli_q i j) ->  let 
                               result = (doProg c s n)
                               add = do_operation_IntandDouble ((do_operation i result), b) Plus
-                              newresult = doCmd (Update d (Val add)) result n
+                              newresult = doCmd (Update (n, d, (Val add))) result n
                            in 
                               doCmd (For (Bli_q i j) b c d) newresult n
            (Bli_nq i j) -> let 
                               result = (doProg c s n)
                               add = do_operation_IntandDouble ((do_operation i result), b) Plus
-                              newresult = doCmd (Update d (Val add)) result n
+                              newresult = doCmd (Update (n, d, (Val add))) result n
                            in 
                               doCmd (For (Bli_nq i j) b c d) newresult n
            (Bli_b i j) ->  let 
                               result = (doProg c s n)
                               add = do_operation_IntandDouble ((do_operation i result), b) Plus
-                              newresult = doCmd (Update d (Val add)) result n
+                              newresult = doCmd (Update (n, d, (Val add))) result n
                            in 
                               doCmd (For (Bli_b i j) b c d) newresult n
            (Bli_sq i j) -> let 
                               result = (doProg c s n)
                               add = do_operation_IntandDouble ((do_operation i result), b) Plus
-                              newresult = doCmd (Update d (Val add)) result  n  
+                              newresult = doCmd (Update (n, d, (Val add))) result  n  
                            in 
                               doCmd (For (Bli_sq i j) b c d) newresult n
            (Bli_bq i j) -> let 
                               result = (doProg c s n)
                               add = do_operation_IntandDouble ((do_operation i result), b) Plus
-                              newresult = doCmd (Update d (Val add)) result n
+                              newresult = doCmd (Update (n, d, (Val add))) result n
                            in 
                               doCmd (For (Bli_bq i j) b c d) newresult n
     else s
