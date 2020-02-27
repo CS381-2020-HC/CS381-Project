@@ -75,6 +75,14 @@ testFor = [
                [(Update ("main", "j", (Add (Get "i") (Val (TInt 1)))))] 
           )]
 
+testWhile :: Prog
+testWhile = [
+            (Set ("i", Val (TInt 0)))
+            ,
+            (While (Bli_s (Get "i") (Val (TInt 10))) 
+                   [(Update ("main", "i", (Add (Get "i") (Val (TInt 1)))))] 
+            )]
+
 testset :: Prog
 testset = [(Set ("j", (Add (Get "i") (Val (TInt 1))))),(Set ("j", (Add (Get "i") (Val (TInt 1))))),(Set ("j", (Add (Get "i") (Val (TInt 1)))))]
 
