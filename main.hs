@@ -114,8 +114,8 @@ testset = [(Set ("j", (Add (Get "i") (Val (TInt 1))))),(Set ("j", (Add (Get "i")
 testadd :: Type
 testadd = do_operation_IntandDouble ((do_operation (Get "i") (doProg testset testval "For")), (TInt 1)) Plus
 
--- test {
---    if (i < 100){
+-- testall {
+--    if (i < (200-100)){
 --       int j = 0;
 --       for(int i = 0; i < 10; i = i + 2){
 --          j = i + 1;
@@ -133,7 +133,7 @@ testall = [
           Begin "test",
           Set ("i", Val (TInt 0)),
           Ifelse (Bli_s (Get "i") 
-                 (Val (TInt 100))) 
+                 (Mis (Val (TInt 200)) (Val (TInt 100)))) 
                  [
                      Set ("j", Val (TInt 0)),
                      For ("i") 
@@ -191,16 +191,22 @@ do_operation (Div a b)          s = do_operation_IntandDouble ((do_operation a s
 do_Bool :: Expb -> [Var] -> Bool
 do_Bool (Bli_s a b)  s = case ((do_operation a s), (do_operation b s)) of ((TInt c), (TInt d)) -> c < d
                                                                           ((TDouble c), (TDouble d)) -> c < d
+                                                                          _ -> error "Type not match. Only can compare Int and Double"
 do_Bool (Bli_b a b)  s = case ((do_operation a s), (do_operation b s)) of ((TInt c), (TInt d)) -> c > d
                                                                           ((TDouble c), (TDouble d)) -> c > d
+                                                                          _ -> error "Type not match. Only can compare Int and Double"
 do_Bool (Bli_q a b)  s = case ((do_operation a s), (do_operation b s)) of ((TInt c), (TInt d)) -> c == d
                                                                           ((TDouble c), (TDouble d)) -> c == d
+                                                                          _ -> error "Type not match. Only can compare Int and Double"
 do_Bool (Bli_nq a b) s = case ((do_operation a s), (do_operation b s)) of ((TInt c), (TInt d)) -> c /= d
                                                                           ((TDouble c), (TDouble d)) -> c /= d
+                                                                          _ -> error "Type not match. Only can compare Int and Double"
 do_Bool (Bli_sq a b) s = case ((do_operation a s), (do_operation b s)) of ((TInt c), (TInt d)) -> c <= d
                                                                           ((TDouble c), (TDouble d)) -> c <= d
+                                                                          _ -> error "Type not match. Only can compare Int and Double"
 do_Bool (Bli_bq a b) s = case ((do_operation a s), (do_operation b s)) of ((TInt c), (TInt d)) -> c >= d
                                                                           ((TDouble c), (TDouble d)) -> c >= d
+                                                                          _ -> error "Type not match. Only can compare Int and Double"
 do_Bool (Bli a)      s = if a /= 0 then True else False
 --do_Bool (Blb_q a b) s = (do_Bool a s) == (do_Bool b s)
 --do_Bool (Blb_nq a b) s = (do_Bool a s) /= (do_Bool b s)
