@@ -207,7 +207,7 @@ doCmd (For a b c d)   s n =
                               doCmd (For a (Bli_bq i j) c d) newresult n
     else s
 
-doCmd (while b d) s n =
+doCmd (While b d) s n =
     if (do_Bool b s) then 
        case b of 
            (Bli_s i j) ->  let 
@@ -225,15 +225,15 @@ doCmd (while b d) s n =
            (Bli_b i j) ->  let 
                               result = (doProg d s n)
                            in 
-                              doCmd (While a (Bli_b i j) d) result n
+                              doCmd (While (Bli_b i j) d) result n
            (Bli_sq i j) -> let 
                               result = (doProg d s n)
                            in 
-                              doCmd (While a (Bli_sq i j) d) result n
+                              doCmd (While (Bli_sq i j) d) result n
            (Bli_bq i j) -> let 
                               result = (doProg d s n)
                            in 
-                              doCmd (While a (Bli_bq i j) d) result n
+                              doCmd (While (Bli_bq i j) d) result n
     else s
 
 remove_function_val :: Cname -> [Var] -> (Cname, [Var])
