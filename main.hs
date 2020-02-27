@@ -114,6 +114,43 @@ testset = [(Set ("j", (Add (Get "i") (Val (TInt 1))))),(Set ("j", (Add (Get "i")
 testadd :: Type
 testadd = do_operation_IntandDouble ((do_operation (Get "i") (doProg testset testval "For")), (TInt 1)) Plus
 
+-- test {
+--    if (i < 100){
+--       int j = 0;
+--       for(int i = 0; i < 10; i = i + 2){
+--          j = i + 1;
+--       }
+--    } else {
+--       while (i < 10){
+--          i++ ;
+--       }
+--       j = i;
+--    }
+-- }
+
+testall :: Prog
+testall = [
+          Begin "test",
+          Set ("i", Val (TInt 0)),
+          Ifelse (Bli_s (Get "i") 
+                 (Val (TInt 100))) 
+                 [
+                     Set ("j", Val (TInt 0)),
+                     For ("i") 
+                         (Bli_s (Get "i") (Val (TInt 10))) 
+                         (TInt 2) 
+                         [
+                           (Update ("test", "j", (Add (Get "i") (Val (TInt 1)))))
+                         ]
+                 ] 
+                 [
+                     While (Bli_s (Get "i") (Val (TInt 10))) 
+                           [(Update ("test", "i", (Add (Get "i") (Val (TInt 1)))))],
+                     Set ("j", Get "i") 
+                 ],
+          End "test"
+          ]
+
 --test :: Expi
 --test = Add (Val (TInt 2)) (Mul (Val (TInt 6))(Val (TInt 3)))
 
@@ -271,3 +308,4 @@ doProg []             s n = s
 doProg ((Begin a):xs) s n = doProg xs s a
 doProg ((End a):xs)   s n = let (nn, ns) = (remove_function_val a s) in doProg xs ns nn
 doProg (x:xs)         s n = doProg xs (doCmd x s n) n
+
