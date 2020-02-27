@@ -61,14 +61,27 @@ test1 = Bli_s (Add (Val (TInt 2)) (Mul (Val (TInt 6))(Val (TInt 3)))) (Val (TInt
 -- test2 = [For (TInt 0) (Bli_s (Val (TInt 0)) (Val (TInt 10))) (TInt 1) [ Operation (Add Get (Val (TInt (-1)))) ] ]
 
 testval :: [Var]
-testval = [("main","i",Val (TInt 0)),("main","t1",Val (TInt 10)),("main","t2",Val (TDouble 5.8)),("main","t3",Val (TString "123")),("main","t4",Val (TBool True))]
+testval = [("main","t1",Val (TInt 10)),("main","t2",Val (TDouble 5.8)),("main","t3",Val (TString "123")),("main","t4",Val (TBool True))]
 
-testFor :: Cmd
-testFor = (For ("i")
+testFor :: Prog
+testFor = [
+          (Set ("i", Val (TInt 0)))
+          ,
+          (Set ("j", Val (TInt 0)))
+          ,
+          (For ("i")
                (Bli_s (Get "i") (Val (TInt 10))) 
                (TInt 1)
-               [(Set ("j", (Add (Get "i") (Val (TInt 1)))))] 
-          )
+               [(Update ("main", "j", (Add (Get "i") (Val (TInt 1)))))] 
+          )]
+
+testWhile :: Prog
+testWhile = [
+            (Set ("i", Val (TInt 0)))
+            ,
+            (While (Bli_s (Get "i") (Val (TInt 10))) 
+                   [(Update ("main", "i", (Add (Get "i") (Val (TInt 1)))))] 
+            )]
 
 testset :: Prog
 testset = [(Set ("j", (Add (Get "i") (Val (TInt 1))))),(Set ("j", (Add (Get "i") (Val (TInt 1))))),(Set ("j", (Add (Get "i") (Val (TInt 1)))))]
@@ -167,7 +180,7 @@ doCmd (For a b c d)   s n =
                               add = do_operation_IntandDouble ((do_operation i result), c) Plus
                               newresult = doCmd (Update (n, a, (Val add))) result n
                            in 
-                              doCmd (For a (Bli_s i j) c d) newresult n
+                              doCmd (For a (Bli_q i j) c d) newresult n
            (Bli_nq i j) -> let 
                               result = (doProg d s n)
                               add = do_operation_IntandDouble ((do_operation i result), c) Plus
