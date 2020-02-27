@@ -21,6 +21,7 @@ data Cmd = Begin Cname
          | Update Var
          | Ifelse Expb Prog Prog
          | For Expb Type Prog Name
+         | While Expb Name
          | Print Name
          | Operation Expi
          deriving (Eq, Show)
