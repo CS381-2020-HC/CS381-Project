@@ -2,6 +2,8 @@ module Man where
 -- At First we use Main for module name, but it will get wrong so we change to this name.
 
 import Data.List
+import Data.Data
+import Data.Function
 
 -- Prog is the type of list Cmd.
 type Prog = [Cmd]
@@ -43,8 +45,8 @@ data Cmd = Begin Fname
          | Ifelse Expb Prog Prog
          | For Name Expb Type Prog
          | While Expb Prog
-         | Print Name
-         | Operation Expi -- could remove.
+         | Print Expi
+--         | Operation Expi -- could remove.
          deriving (Eq, Show)
 
 -- the data of operation.
@@ -114,7 +116,7 @@ testset = [(Set ("j", (Add (Get "i") (Val (TInt 1))))),(Set ("j", (Add (Get "i")
 testadd :: Type
 testadd = do_operation_IntandDouble ((do_operation (Get "i") (doProg testset testval "For")), (TInt 1)) Plus
 
--- testall {
+-- testall () {
 --    if (i < (200-100)){
 --       int j = 0;
 --       for(int i = 0; i < 10; i = i + 2){
@@ -211,10 +213,21 @@ do_Bool (Bli a)      s = if a /= 0 then True else False
 --do_Bool (Blb_q a b) s = (do_Bool a s) == (do_Bool b s)
 --do_Bool (Blb_nq a b) s = (do_Bool a s) /= (do_Bool b s)
 
+checkconstr :: Type -> Type -> Bool
+checkconstr (TInt a) (TInt b) = True
+checkconstr (TDouble a) (TDouble b) = True
+checkconstr (TString a) (TString b) = True
+checkconstr (TBool a) (TBool b) = True
+checkconstr a b = False
 
 updatelist :: Var -> [Var] -> [Var] -> Maybe [Var]
 updatelist a         []           s = Nothing
-updatelist (a, b, c) ((d,e,f):xs) s = if a == d && b == e then Just ((d, e, (Val (do_operation c s))):xs) 
+updatelist (a, b, c) ((d,e,f):xs) s = if a == d && b == e then let 
+                                                                  ans = (do_operation c s) 
+                                                               in 
+                                                                  case f of (Val g) -> if (checkconstr g ans) then Just ((d, e, (Val ans)):xs) 
+                                                                                       else error "Update result not match the Type."
+                                                                            _ -> error ("Wrong value in Function Name : " ++ d ++ " Value Name : " ++ e)
                                       else case (updatelist (a, b, c) xs s) of Just x -> Just ((d,e,f):(x))
                                                                                Nothing -> Nothing
 
@@ -223,6 +236,7 @@ checkset a      []              = False
 checkset (a, b) ((d, e, f):xs)  = if a == d && b == e then True else checkset (a, b) xs
 
 doCmd :: Cmd -> [Var] -> Fname -> [Var] 
+doCmd (Print a)       s n = error (show (do_operation a s))
 doCmd (Set (a, b))    s n = if (checkset (n, a) s) then error ("Name : " ++ a ++ " in " ++ n ++ " value list. " ++ "Set command can not allow same name in sam function name.")
                             else let 
                                     ans = do_operation b s 
