@@ -116,6 +116,19 @@ testset = [(Set ("j", (Add (Get "i") (Val (TInt 1))))),(Set ("j", (Add (Get "i")
 testadd :: Type
 testadd = do_operation_IntandDouble ((do_operation (Get "i") (doProg testset testval "For")), (TInt 1)) Plus
 
+testIfElse :: Prog
+testIfElse = [
+             Set ("i", Val (TInt 0)),
+             Ifelse (Bli_s (Get "i")
+                    (Mis (Val (TInt 200)) (Val (TInt 100))))
+                    [
+                        (Update ("main", "i", (Add (Get "i") (Val (TInt 1)))))
+                    ]
+                    [
+                        (Update ("main", "i", (Add (Get "i") (Val (TInt 2)))))
+                    ]
+             ]
+             
 -- testall () {
 --    if (i < (200-100)){
 --       int j = 0;
