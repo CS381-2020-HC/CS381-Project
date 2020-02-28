@@ -58,10 +58,11 @@ data Expi = Get Name
           | Mul Expi Expi    -- -
           | Mis Expi Expi    -- *
           | Div Expi Expi    -- /
+          | Mod Expi Expi    -- %
           deriving (Eq, Show)
 
 -- We give the name for do the operation for +,-,*,/ by create data type.
-data Expm = Plus | Minus | Multiply | Divide
+data Expm = Plus | Minus | Multiply | Divide | Remainder
   deriving (Eq, Show)
 
 -- Expb is the condiction.
@@ -172,6 +173,23 @@ testall = [
           End "testall"
           ]
 
+-- this is for testing the 1071 and 462 euclidean algorithm
+-- the answer is in the value list name m.
+euclidean_algorithm :: Prog
+euclidean_algorithm = [
+                        Begin "gcd",
+                        Set ("m", Val (TInt 1071)),
+                        Set ("n", Val (TInt 462)),
+                        Set ("t", Val (TInt 1)),
+                        While (Bli_nq (Get "t") (Val (TInt 0))) 
+                              [
+                                 Update ("gcd", "t", Mod (Get "m") (Get "n")),
+                                 Update ("gcd", "m", Get "n"),
+                                 Update ("gcd", "n", Get "t")
+                              ]
+                        --Print (Get "m")
+                      ]
+
 --test :: Expi
 --test = Add (Val (TInt 2)) (Mul (Val (TInt 6))(Val (TInt 3)))
 
@@ -192,6 +210,10 @@ do_operation_IntandDouble (TInt a, TInt b) Divide = TInt (a `div` b)
 do_operation_IntandDouble (TDouble a, TDouble b) Divide = TDouble (a / b)
 do_operation_IntandDouble (TInt a, TDouble b) Divide = TDouble ((fromIntegral a) / b)
 do_operation_IntandDouble (TDouble a, TInt b) Divide = TDouble (a / (fromIntegral b))
+do_operation_IntandDouble (TInt a, TInt b) Remainder = TInt (a `mod` b) 
+do_operation_IntandDouble (TDouble a, TDouble b) Remainder = error "Remainder only can input two Int."
+do_operation_IntandDouble (TInt a, TDouble b) Remainder = error "Remainder only can input two Int."
+do_operation_IntandDouble (TDouble a, TInt b) Remainder = error "Remainder only can input two Int."
 do_operation_IntandDouble _ a = error "Can not match type Int or Double."
 
 findVar :: Name -> [Var] -> Type
@@ -207,7 +229,7 @@ do_operation (Add a b)          s = do_operation_IntandDouble ((do_operation a s
 do_operation (Mul a b)          s = do_operation_IntandDouble ((do_operation a s), (do_operation b s)) Multiply       
 do_operation (Mis a b)          s = do_operation_IntandDouble ((do_operation a s), (do_operation b s)) Minus       
 do_operation (Div a b)          s = do_operation_IntandDouble ((do_operation a s), (do_operation b s)) Divide      
-
+do_operation (Mod a b)          s = do_operation_IntandDouble ((do_operation a s), (do_operation b s)) Remainder
 
 do_Bool :: Expb -> [Var] -> Bool
 do_Bool (Bli_s a b)  s = case ((do_operation a s), (do_operation b s)) of ((TInt c), (TInt d)) -> c < d
@@ -254,8 +276,9 @@ checkset :: (Fname, Name) -> [Var] -> Bool
 checkset a      []              = False
 checkset (a, b) ((d, e, f):xs)  = if a == d && b == e then True else checkset (a, b) xs
 
+-- Our print have not finish so we use error function to show you.
 doCmd :: Cmd -> [Var] -> Fname -> [Var] 
-doCmd (Print a)       s n = error (show (do_operation a s))
+doCmd (Print a)       s n = error (show (do_operation a s)) -- this have wrong will fix.
 doCmd (Set (a, b))    s n = if (checkset (n, a) s) then error ("Name : " ++ a ++ " in " ++ n ++ " value list. " ++ "Set command can not allow same name in sam function name.")
                             else let 
                                     ans = do_operation b s 
@@ -318,7 +341,7 @@ doCmd (While b d) s n =
            (Bli_q i j) ->  let 
                               result = (doProg d s n)
                            in 
-                              doCmd (While (Bli_s i j) d) result n
+                              doCmd (While (Bli_q i j) d) result n
            (Bli_nq i j) -> let 
                               result = (doProg d s n)
                            in 
