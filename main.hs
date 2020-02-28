@@ -132,25 +132,31 @@ testadd = do_operation_IntandDouble ((do_operation (Get "i") (doProg testset tes
 
 testall :: Prog
 testall = [
-          Begin "test",
+          Begin "testall",
           Set ("i", Val (TInt 0)),
+          Begin "ifelse",
           Ifelse (Bli_s (Get "i") 
                  (Mis (Val (TInt 200)) (Val (TInt 100)))) 
                  [
                      Set ("j", Val (TInt 0)),
+                     Begin "for",
                      For ("i") 
                          (Bli_s (Get "i") (Val (TInt 10))) 
                          (TInt 2) 
                          [
-                           (Update ("test", "j", (Add (Get "i") (Val (TInt 1)))))
-                         ]
+                           (Update ("ifelse", "j", (Add (Get "i") (Val (TInt 1)))))
+                         ],
+                     End "for"
                  ] 
                  [
+                     Begin "while",
                      While (Bli_s (Get "i") (Val (TInt 10))) 
-                           [(Update ("test", "i", (Add (Get "i") (Val (TInt 1)))))],
-                     Set ("j", Get "i") 
+                           [(Update ("ifelse", "i", (Add (Get "i") (Val (TInt 1)))))],
+                     Set ("j", Get "i"),
+                     End "while"
                  ],
-          End "test"
+          End "ifelse",
+          End "testall"
           ]
 
 --test :: Expi
