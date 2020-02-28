@@ -4,7 +4,7 @@ Yue Chen                   chenyu6
 Shih-Chao Hung             hungshi
 Tianhong Huang             huantian
 
-Our language’s name is Haskell-C. The paradigm of our language is Imperative languages. We decide to include the scope and lifetime of the variable.
+Our language’s name is Modified-C. The paradigm of our language is Imperative languages. We decide to include the scope and lifetime of the variable.
 
 Our language implementation should be intended to be run from GHCi. main.hs should be loaded.
 
