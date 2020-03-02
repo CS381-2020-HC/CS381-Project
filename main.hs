@@ -59,8 +59,8 @@ data Cmd = Begin Fname
 data Expi = Get Name
           | Val Value
           | Add Expi Expi    -- +
-          | Mul Expi Expi    -- -
-          | Mis Expi Expi    -- *
+          | Mul Expi Expi    -- *
+          | Mis Expi Expi    -- -
           | Div Expi Expi    -- /
           | Mod Expi Expi    -- %
           deriving (Eq, Show)
