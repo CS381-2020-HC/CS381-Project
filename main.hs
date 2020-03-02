@@ -23,8 +23,8 @@ type Fname = String
 -- Name is the value name.
 type Name = String
 
--- Define the value list base Value, and it include Function name, value name, and the Expi Value to do the operation.
-type Var = (Fname, Name, Expi)
+-- Define the value list base Value, and it include Function name, value name, and the Expr Value to do the operation.
+type Var = (Fname, Name, Expr)
 
 -- This Value will change the name in the fucture.
 -- This Value just for know the two value Value in do_operation_IntandDouble.
@@ -42,42 +42,42 @@ type EnvironmentData = ([Var],[String],[(Fname,Prog)])
 -- Print is to show something.
 data Cmd = Begin Fname
          | End Fname
-         | Set (Name, Expi)
+         | Set (Name, Expr)
          | Update Var
          | Ifelse Expb Prog Prog
          | For Name Expb Value Prog
          | While Expb Prog
-         | Print Expi
-         | Return Expi
+         | Print Expr
+         | Return Expr
          | SetFunction Fname [Value]
---         | Operation Expi -- could remove.
+--         | Operation Expr -- could remove.
          deriving (Eq, Show)
 
 -- the data of operation.
 -- Get is to get the value call Name in value list.
 -- Val is the value which you can do the operation.
-data Expi = Get Name
+data Expr = Get Name
           | Val Value
-          | Add Expi Expi    -- +
-          | Mul Expi Expi    -- *
-          | Mis Expi Expi    -- -
-          | Div Expi Expi    -- /
-          | Mod Expi Expi    -- %
+          | Add Expr Expr    -- +
+          | Mul Expr Expr    -- *
+          | Mis Expr Expr    -- -
+          | Div Expr Expr    -- /
+          | Mod Expr Expr    -- %
           deriving (Eq, Show)
 
 -- We give the name for do the operation for +,-,*,/ by create data Value.
-data Expm = Plus | Minus | Multiply | Divide | Remainder
+data Oper = Plus | Minus | Multiply | Divide | Remainder
   deriving (Eq, Show)
 
 -- Expb is the condiction.
 data Expb = GetBool 
           | Bli Int           -- Will rewrite
-          | Blv_s Expi Expi   -- Left Smaller then Right.
-          | Blv_q Expi Expi   -- Left Equal with Right.
-          | Blv_nq Expi Expi  -- Left not Equal with Right.
-          | Blv_b Expi Expi   -- Left Bigger then Right.
-          | Blv_sq Expi Expi  -- Left Smaller and Equal then Right.
-          | Blv_bq Expi Expi  -- Left Bigger and Equal then Right.
+          | Blv_s Expr Expr   -- Left Smaller then Right.
+          | Blv_q Expr Expr   -- Left Equal with Right.
+          | Blv_nq Expr Expr  -- Left not Equal with Right.
+          | Blv_b Expr Expr   -- Left Bigger then Right.
+          | Blv_sq Expr Expr  -- Left Smaller and Equal then Right.
+          | Blv_bq Expr Expr  -- Left Bigger and Equal then Right.
           | Blb_q Expb Expb   -- Will Remove
           | Blb_nq Expb Expb  -- Will Remove
           deriving (Eq, Show)
@@ -87,7 +87,7 @@ data Expb = GetBool
 data OutPut = Env [Var]
             | Prt [String]
 
-testoperation :: Expi
+testoperation :: Expr
 testoperation = Add (Val (TInt 2)) (Mul (Val (TInt 6))(Val (TInt 3)))
 
 testcondiction :: Expb
@@ -198,10 +198,10 @@ euclidean_algorithm = [
                         Return (Get "m")
                       ]
 
---test :: Expi
+--test :: Expr
 --test = Add (Val (TInt 2)) (Mul (Val (TInt 6))(Val (TInt 3)))
 
-do_operation_IntandDouble :: LeftRight -> Expm -> Value
+do_operation_IntandDouble :: LeftRight -> Oper -> Value
 do_operation_IntandDouble (TInt a, TInt b) Plus = TInt (a + b) 
 do_operation_IntandDouble (TDouble a, TDouble b) Plus = TDouble (a + b)
 do_operation_IntandDouble (TInt a, TDouble b) Plus = TDouble ((fromIntegral a) + b)
@@ -228,7 +228,7 @@ findVar :: Name -> [Var] -> Value
 findVar a [] = error ("Can not find the name " ++ a ++ " in value list.")
 findVar a ((d, e, f):xs) = if a == e then case f of Val x -> x else findVar a xs
 
-do_operation :: Expi -> [Var] -> Value
+do_operation :: Expr -> [Var] -> Value
 do_operation (Get a)            s = findVar a s
 do_operation (Val (TString _ )) s = error "do_operation function can not allow String Value."
 do_operation (Val (TBool _ ))   s = error "do_operation function can not allow Bool Value."
