@@ -11,11 +11,11 @@ type Prog = [Cmd]
 -- Define a Value data for the Int, Double, String, Bool.
 -- We put the Float Value and Double Value together.
 data Value = TInt Int         -- Int
-          | TDouble Double   -- Float and Double
-          | TString String   -- String
-          | TBool Bool       -- Bool
-          | TError           -- not designe yet.
-          deriving (Eq, Show)
+           | TDouble Double   -- Float and Double
+           | TString String   -- String
+           | TBool Bool       -- Bool
+           | TError           -- not designe yet.
+           deriving (Eq, Show)
 
 -- Fname is the Function Name.
 type Fname = String
@@ -30,7 +30,7 @@ type Var = (Fname, Name, Expr)
 -- This Value just for know the two value Value in do_operation_IntandDouble.
 type LeftRight = (Value, Value)  -- will rewrite the Value name
 
-type EnvironmentData = ([Var],[String],[(Fname,Prog)])
+type EnvironmentData = ([Var], [String], [(Fname, Prog)])
 
 -- Define the Cmd data.
 -- Begin and End is to call new function and End the function.
@@ -49,7 +49,8 @@ data Cmd = Begin Fname
          | While Expb Prog
          | Print Expr
          | Return Expr
-         | SetFunction Fname [Value]
+         | SetFunction Fname [Var] Prog
+         | CallFunction Fname [Var]
 --         | Operation Expr -- could remove.
          deriving (Eq, Show)
 
@@ -185,9 +186,9 @@ testall = [
 -- the answer is in the value list name m.
 euclidean_algorithm :: Prog
 euclidean_algorithm = [
-                        Begin "gcd",
-                        Set ("m", Val (TInt 1071)),
-                        Set ("n", Val (TInt 462)),
+                        SetFunction "gcd" 
+                        [("gcd", "m", Val (TInt 0)),("gcd", "n", Val (TInt 0))]
+                        [Begin "gcd",
                         Set ("t", Val (TInt 1)),
                         While (Blv_nq (Get "t") (Val (TInt 0))) 
                               [
@@ -195,7 +196,8 @@ euclidean_algorithm = [
                                  Update ("gcd", "m", Get "n"),
                                  Update ("gcd", "n", Get "t")
                               ],
-                        Return (Get "m")
+                        Print (Get "m")],
+                        CallFunction "gcd" [("gcd", "m", Val (TInt 1071)),("gcd", "n", Val (TInt 462))]
                       ]
 
 --test :: Expr
@@ -248,9 +250,13 @@ do_Bool (Blv_b a b)  s = case ((do_operation a s), (do_operation b s)) of ((TInt
                                                                           _ -> error "Value not match. Only can compare two Int or two Double."
 do_Bool (Blv_q a b)  s = case ((do_operation a s), (do_operation b s)) of ((TInt c), (TInt d)) -> c == d
                                                                           ((TDouble c), (TDouble d)) -> c == d
+                                                                          ((TString c), (TString d)) -> c == d
+                                                                          ((TBool c), (TBool d)) -> c == d
                                                                           _ -> error "Value not match. Only can compare two Int or two Double."
 do_Bool (Blv_nq a b) s = case ((do_operation a s), (do_operation b s)) of ((TInt c), (TInt d)) -> c /= d
                                                                           ((TDouble c), (TDouble d)) -> c /= d
+                                                                          ((TString c), (TString d)) -> c /= d
+                                                                          ((TBool c), (TBool d)) -> c /= d
                                                                           _ -> error "Value not match. Only can compare two Int or two Double."
 do_Bool (Blv_sq a b) s = case ((do_operation a s), (do_operation b s)) of ((TInt c), (TInt d)) -> c <= d
                                                                           ((TDouble c), (TDouble d)) -> c <= d
@@ -379,12 +385,23 @@ remove_function_val a ((b, c, d):xs) = if a == b then
                                           else remove_function_val a xs
                                        else (b, ((b, c, d):xs))
 
+findfunction :: [(Fname, Prog)] -> Fname -> Prog
+findfunction []          n = error "Function not set."
+findfunction ((a, b):xs) n = if a == n then b
+                             else findfunction xs n
+
+callf :: [Var] -> EnvironmentData -> Fname -> EnvironmentData
+callf []     s n = s
+callf (x:xs) s n = callf xs (doCmd (Update x) s n) n
+
 doProg :: Prog -> EnvironmentData -> Fname -> EnvironmentData
-doProg []              s         n = s
-doProg ((Return a):xs) (v, s, f) n = let ans = do_operation a v in doProg ((End n):xs) (((n, "return", (Val (ans))):v), s, f) n
-doProg ((Begin a):xs)  s         n = doProg xs s a
-doProg ((End a):xs)    (v, s, f) n = let (nn, ns) = (remove_function_val a v) in doProg xs (ns, s, f) nn
-doProg (x:xs)          s         n = doProg xs (doCmd x s n) n
+doProg []                        s         n = s
+doProg ((SetFunction a b c):xs)  (v, s, f) n = doProg xs (v ++ b, s, ((a, c):f)) n
+doProg ((CallFunction a b):xs)   (v, s, f) n = doProg (findfunction f a) (callf b (v, s, f) n) n
+doProg ((Return a):xs)           (v, s, f) n = let ans = do_operation a v in doProg ((End n):[]) (((n, "return", (Val (ans))):v), s, f) n
+doProg ((Begin a):xs)            s         n = doProg xs s a
+doProg ((End a):xs)              (v, s, f) n = let (nn, ns) = (remove_function_val a v) in doProg xs (ns, s, f) nn
+doProg (x:xs)                    s         n = doProg xs (doCmd x s n) n
 
 start :: Prog -> [String]
 start [] = ["Nothing"]
