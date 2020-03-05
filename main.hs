@@ -24,13 +24,13 @@ type Fname = String
 type Name = String
 
 -- Define the value list base Value, and it include Function name, value name, and the Expr Value to do the operation.
-type Var = (Fname, Name, Expr)
+type VarEnv = (Fname, Name, Expr)
 
 -- This Value will change the name in the fucture.
 -- This Value just for know the two value Value in do_operation_IntandDouble.
 type LeftRight = (Value, Value)  -- will rewrite the Value name
 
-type EnvironmentData = ([Var], [String], [(Fname, Prog)])
+type EnvironmentData = ([VarEnv], [String], [(Fname, Prog)])
 
 -- Define the Cmd data.
 -- Begin and End is to call new function and End the function.
@@ -43,14 +43,14 @@ type EnvironmentData = ([Var], [String], [(Fname, Prog)])
 data Cmd = Begin Fname
          | End Fname
          | Set (Name, Expr)
-         | Update Var
+         | Update VarEnv
          | Ifelse Expb Prog Prog
          | For Name Expb Value Prog
          | While Expb Prog
          | Print Expr
          | Return Expr
-         | SetFunction Fname [Var] Prog
-         | CallFunction Fname [Var]
+         | SetFunction Fname [VarEnv] Prog
+         | CallFunction Fname [VarEnv]
 --         | Operation Expr -- could remove.
          deriving (Eq, Show)
 
@@ -85,7 +85,7 @@ data Expb = GetBool
 
 
 
-data OutPut = Env [Var]
+data OutPut = Env [VarEnv]
             | Prt [String]
 
 testoperation :: Expr
@@ -226,11 +226,11 @@ do_operation_IntandDouble (TInt a, TDouble b) Remainder = error "Remainder only 
 do_operation_IntandDouble (TDouble a, TInt b) Remainder = error "Remainder only can input two Int."
 do_operation_IntandDouble _ a = error "Can not match Value Int or Double."
 
-findVar :: Name -> [Var] -> Value
+findVar :: Name -> [VarEnv] -> Value
 findVar a [] = error ("Can not find the name " ++ a ++ " in value list.")
 findVar a ((d, e, f):xs) = if a == e then case f of Val x -> x else findVar a xs
 
-do_operation :: Expr -> [Var] -> Value
+do_operation :: Expr -> [VarEnv] -> Value
 do_operation (Get a)            s = findVar a s
 do_operation (Val (TString _ )) s = error "do_operation function can not allow String Value."
 do_operation (Val (TBool _ ))   s = error "do_operation function can not allow Bool Value."
@@ -241,7 +241,7 @@ do_operation (Mis a b)          s = do_operation_IntandDouble ((do_operation a s
 do_operation (Div a b)          s = do_operation_IntandDouble ((do_operation a s), (do_operation b s)) Divide      
 do_operation (Mod a b)          s = do_operation_IntandDouble ((do_operation a s), (do_operation b s)) Remainder
 
-do_Bool :: Expb -> [Var] -> Bool
+do_Bool :: Expb -> [VarEnv] -> Bool
 do_Bool (Blv_s a b)  s = case ((do_operation a s), (do_operation b s)) of ((TInt c), (TInt d)) -> c < d
                                                                           ((TDouble c), (TDouble d)) -> c < d
                                                                           _ -> error "Value not match. Only can compare two Int or two Double."
@@ -275,7 +275,7 @@ checkconstr (TString a) (TString b) = True
 checkconstr (TBool a) (TBool b) = True
 checkconstr a b = False
 
-updatelist :: Var -> [Var] -> Maybe [Var]
+updatelist :: VarEnv -> [VarEnv] -> Maybe [VarEnv]
 updatelist a         []           = Nothing
 updatelist (a, b, c) ((d,e,f):xs) = if a == d && b == e then case (f, c) of (Val g, Val h) -> if (checkconstr g h) then Just ((d, e, c):xs) 
                                                                                               else error "Update result not match the Value."
@@ -283,7 +283,7 @@ updatelist (a, b, c) ((d,e,f):xs) = if a == d && b == e then case (f, c) of (Val
                                     else case (updatelist (a, b, c) xs) of Just x -> Just ((d,e,f):(x))
                                                                            Nothing -> Nothing
 
-checkset :: (Fname, Name) -> [Var] -> Bool
+checkset :: (Fname, Name) -> [VarEnv] -> Bool
 checkset a      []              = False
 checkset (a, b) ((d, e, f):xs)  = if a == d && b == e then True else checkset (a, b) xs
 
@@ -375,7 +375,7 @@ doCmd (While b d) (v, s, f) n =
                               doCmd (While (Blv_bq i j) d) result n
     else (v, s, f)
 
-remove_function_val :: Fname -> [Var] -> (Fname, [Var])
+remove_function_val :: Fname -> [VarEnv] -> (Fname, [VarEnv])
 remove_function_val a []             = (a, [])
 remove_function_val a ((b, c, d):xs) = if a == b then 
                                           if c == "return" then let 
@@ -390,7 +390,7 @@ findfunction []          n = error "Function not set."
 findfunction ((a, b):xs) n = if a == n then b
                              else findfunction xs n
 
-callf :: [Var] -> EnvironmentData -> Fname -> EnvironmentData
+callf :: [VarEnv] -> EnvironmentData -> Fname -> EnvironmentData
 callf []     s n = s
 callf (x:xs) s n = callf xs (doCmd (Update x) s n) n
 
