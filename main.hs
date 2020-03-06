@@ -20,7 +20,7 @@ data Value = TInt Int         -- Int
 -- Fname is the Function Name.
 type Fname = String
 
--- Name is the value name.
+-- Name is the variable name.
 type Name = String
 
 -- Define the value list base Value, and it include Function name, value name, and the Expr Value to do the operation.
