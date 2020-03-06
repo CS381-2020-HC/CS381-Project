@@ -196,8 +196,10 @@ euclidean_algorithm = [
                                  Update ("gcd", "m", Get "n"),
                                  Update ("gcd", "n", Get "t")
                               ],
-                        Print (Get "m")],
-                        CallFunction "gcd" [("gcd", "m", Val (TInt 1071)),("gcd", "n", Val (TInt 462))]
+                        Return (Get "m")],
+                        CallFunction "gcd" [("gcd", "m", Val (TInt 1071)),("gcd", "n", Val (TInt 462))],    
+                        Set ("x", Get "return"),
+                        Print (Get "x")
                       ]
 
 --test :: Expr
@@ -397,7 +399,7 @@ callf (x:xs) s n = callf xs (doCmd (Update x) s n) n
 doProg :: Prog -> EnvironmentData -> Fname -> EnvironmentData
 doProg []                        s         n = s
 doProg ((SetFunction a b c):xs)  (v, s, f) n = doProg xs (v ++ b, s, ((a, c):f)) n
-doProg ((CallFunction a b):xs)   (v, s, f) n = doProg (findfunction f a) (callf b (v, s, f) n) n
+doProg ((CallFunction a b):xs)   (v, s, f) n = doProg xs (doProg (findfunction f a) (callf b (v, s, f) n) n) n
 doProg ((Return a):xs)           (v, s, f) n = let ans = do_operation a v in doProg ((End n):[]) (((n, "return", (Val (ans))):v), s, f) n
 doProg ((Begin a):xs)            s         n = doProg xs s a
 doProg ((End a):xs)              (v, s, f) n = let (nn, ns) = (remove_function_val a v) in doProg xs (ns, s, f) nn
