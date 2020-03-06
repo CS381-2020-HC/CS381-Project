@@ -405,6 +405,6 @@ doProg ((Begin a):xs)            s         n = doProg xs s a
 doProg ((End a):xs)              (v, s, f) n = let (nn, ns) = (remove_function_val a v) in doProg xs (ns, s, f) nn
 doProg (x:xs)                    s         n = doProg xs (doCmd x s n) n
 
-start :: Prog -> [String]
-start [] = ["Nothing"]
-start a  = let (v, s, f) = (doProg a ([], [], []) "main") in s
+start :: Prog -> IO ()
+start [] = putStrLn "Nothing"
+start a  = let (v, s, f) = (doProg a ([], [], []) "main") in putStrLn (intercalate "\n" s)
