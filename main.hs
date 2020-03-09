@@ -140,7 +140,7 @@ testIfElse = [
              ]
 
 testStringAdd :: Prog
-testStringAdd = [Set ("i",(Add (Val (TString "Hello ")) (Add (Val (TString "World!")) (Val (TString ":)")))))]
+testStringAdd = [Set ("i",(Add (Val (TString "Hello ")) (Add (Val (TString "World!")) (Val (TString " :)")))))]
 
 -- testall () {
 --    if (i < (200-100)){
