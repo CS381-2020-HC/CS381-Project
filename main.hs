@@ -138,7 +138,10 @@ testIfElse = [
                         (Update ("main", "i", (Add (Get "i") (Val (TInt 2)))))
                     ]
              ]
-             
+
+testStringAdd :: Prog
+testStringAdd = [Set ("i",(Add (Val (TString "Hello ")) (Val (TString "World!"))))]
+
 -- testall () {
 --    if (i < (200-100)){
 --       int j = 0;
@@ -234,14 +237,25 @@ findVar a ((d, e, f):xs) = if a == e then case f of Val x -> x else findVar a xs
 
 do_operation :: Expr -> [Var] -> Value
 do_operation (Get a)            s = findVar a s
-do_operation (Val (TString _ )) s = error "do_operation function can not allow String Value."
+-- do_operation (Val (TString _ )) s = error "do_operation function can not allow String Value."
 do_operation (Val (TBool _ ))   s = error "do_operation function can not allow Bool Value."
 do_operation (Val a)            s = a
-do_operation (Add a b)          s = do_operation_IntandDouble ((do_operation a s), (do_operation b s)) Plus        
+do_operation (Add a b)          s = case ((do_operation a s), (do_operation b s))of 
+                                        (TString a, TString b) -> TString (a++b)
+                                        (TString _, _)         -> error "do_operation function can not allow String plus not String."
+                                        (_, TString _)         -> error "do_operation function can not allow String plus not String."
+                                        (a,b)                  -> do_operation_IntandDouble (a, b) Plus        
 do_operation (Mul a b)          s = do_operation_IntandDouble ((do_operation a s), (do_operation b s)) Multiply       
 do_operation (Mis a b)          s = do_operation_IntandDouble ((do_operation a s), (do_operation b s)) Minus       
 do_operation (Div a b)          s = do_operation_IntandDouble ((do_operation a s), (do_operation b s)) Divide      
 do_operation (Mod a b)          s = do_operation_IntandDouble ((do_operation a s), (do_operation b s)) Remainder
+
+do_arrayoperation :: Expr -> [Var] -> Value
+do_arrayoperation (Val (TString a))                         s = TString a
+do_arrayoperation (Add (Val (TString a)) (Val (TString b))) s = TString (a ++ b)
+do_arrayoperation _                                         s = error "do_arrayoperation function type error"
+
+
 
 do_Bool :: Expb -> [Var] -> Bool
 do_Bool (Blv_s a b)  s = case ((do_operation a s), (do_operation b s)) of ((TInt c), (TInt d)) -> c < d
@@ -408,3 +422,5 @@ doProg (x:xs)                    s         n = doProg xs (doCmd x s n) n
 start :: Prog -> IO ()
 start [] = putStrLn "Nothing"
 start a  = let (v, s, f) = (doProg a ([], [], []) "main") in putStrLn (intercalate "\n" s)
+
+
