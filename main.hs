@@ -14,6 +14,7 @@ data Value = TInt Int         -- Int
            | TDouble Double   -- Float and Double
            | TString String   -- String
            | TBool Bool       -- Bool
+           | TList [Value]    -- List
            | TError           -- not designe yet.
            deriving (Eq, Show)
 
@@ -71,7 +72,7 @@ data Oper = Plus | Minus | Multiply | Divide | Remainder
   deriving (Eq, Show)
 
 -- Expb is the condiction.
-data Expb = GetBool 
+data Expb = GetBool Bool
           | Bli Int           -- Will rewrite
           | Blv_s Expr Expr   -- Left Smaller then Right.
           | Blv_q Expr Expr   -- Left Equal with Right.
@@ -141,6 +142,16 @@ testIfElse = [
 
 testStringAdd :: Prog
 testStringAdd = [Set ("i",(Add (Val (TString "Hello ")) (Add (Val (TString "World!")) (Val (TString " :)")))))]
+
+testListadd :: Prog
+testListadd = [
+              Set ("i", (Add (Val (TList [TInt 0,TInt 1])) (Val (TInt 2)))),
+              Set ("j", (Add (Val (TInt 5)) (Get "i"))),
+              Set ("k", (Add (Get "i") (Get "j"))),
+              Print (Get "i"),
+              Print (Get "j"),
+              Print (Get "k")
+              ]
 
 -- testall () {
 --    if (i < (200-100)){
@@ -226,10 +237,14 @@ do_operation_IntandDouble (TDouble a, TDouble b) Divide = TDouble (a / b)
 do_operation_IntandDouble (TInt a, TDouble b) Divide = TDouble ((fromIntegral a) / b)
 do_operation_IntandDouble (TDouble a, TInt b) Divide = TDouble (a / (fromIntegral b))
 do_operation_IntandDouble (TInt a, TInt b) Remainder = TInt (a `mod` b) 
-do_operation_IntandDouble (TDouble a, TDouble b) Remainder = error "Remainder only can input two Int."
-do_operation_IntandDouble (TInt a, TDouble b) Remainder = error "Remainder only can input two Int."
-do_operation_IntandDouble (TDouble a, TInt b) Remainder = error "Remainder only can input two Int."
-do_operation_IntandDouble _ a = error "Can not match Value Int or Double."
+do_operation_IntandDouble (TDouble a, TDouble b) Remainder = error "Mod only can input two Int."
+do_operation_IntandDouble (TInt a, TDouble b) Remainder = error "Mod only can input two Int."
+do_operation_IntandDouble (TDouble a, TInt b) Remainder = error "Mod only can input two Int."
+do_operation_IntandDouble _ a = case a of Plus -> error "Bool and TError can not do the Add operation."
+                                          Multiply -> error "String, Bool, List, and TError can not do the Mul operation."
+                                          Minus -> error "String, Bool, List, and TError can not do the Mis operation."
+                                          Divide -> error "String, Bool, List, and TError can not do the Div operation."
+                                          Remainder -> error "Mod only can input two Int."
 
 findVar :: Name -> [Var] -> Value
 findVar a [] = error ("Can not find the name " ++ a ++ " in value list.")
@@ -244,6 +259,9 @@ do_operation (Add a b)          s = case ((do_operation a s), (do_operation b s)
                                         (TString a, TString b) -> TString (a++b)
                                         (TString _, _)         -> error "do_operation function can not allow String plus not String."
                                         (_, TString _)         -> error "do_operation function can not allow String plus not String."
+                                        (TList a, TList b)     -> if checkconstr (TList a) (TList b) then TList (a ++ b) else error "Two List cound not add together because the type not same."
+                                        (TList (a:as), b)      -> if checkconstr a b then TList ((a:as) ++ [b]) else error ((constostr b) ++ " could not match the list.")
+                                        (a, TList (b:bs))      -> if checkconstr a b then TList (a:b:bs) else error ((constostr a) ++ " could not match the list.")
                                         (a,b)                  -> do_operation_IntandDouble (a, b) Plus        
 do_operation (Mul a b)          s = do_operation_IntandDouble ((do_operation a s), (do_operation b s)) Multiply       
 do_operation (Mis a b)          s = do_operation_IntandDouble ((do_operation a s), (do_operation b s)) Minus       
@@ -281,15 +299,25 @@ do_Bool (Blv_bq a b) s = case ((do_operation a s), (do_operation b s)) of ((TInt
                                                                           ((TDouble c), (TDouble d)) -> c >= d
                                                                           _ -> error "Value not match. Only can compare two Int or two Double."
 do_Bool (Bli a)      s = if a /= 0 then True else False
+do_Bool (GetBool a)  s = a
 --do_Bool (Blb_q a b) s = (do_Bool a s) == (do_Bool b s)
 --do_Bool (Blb_nq a b) s = (do_Bool a s) /= (do_Bool b s)
 
 checkconstr :: Value -> Value -> Bool
-checkconstr (TInt a) (TInt b) = True
-checkconstr (TDouble a) (TDouble b) = True
-checkconstr (TString a) (TString b) = True
-checkconstr (TBool a) (TBool b) = True
-checkconstr a b = False
+checkconstr (TInt a) (TInt b)             = True
+checkconstr (TDouble a) (TDouble b)       = True
+checkconstr (TString a) (TString b)       = True
+checkconstr (TBool a) (TBool b)           = True
+checkconstr (TList (a:as)) (TList (b:bs)) = checkconstr a b
+checkconstr a b                           = False
+
+constostr :: Value -> String
+constostr (TInt _)    = "TInt"
+constostr (TDouble _) = "TDouble"
+constostr (TString _) = "TString"
+constostr (TBool _)   = "TBool"
+constostr (TList _)   = "TList"
+constostr (TError)    = "TError"
 
 updatelist :: Var -> [Var] -> Maybe [Var]
 updatelist a         []           = Nothing
@@ -303,11 +331,27 @@ checkset :: (Fname, Name) -> [Var] -> Bool
 checkset a      []              = False
 checkset (a, b) ((d, e, f):xs)  = if a == d && b == e then True else checkset (a, b) xs
 
+listtostring :: [Value] -> String
+listtostring (a:[]) = case a of TInt i -> (show (i))
+                                TDouble d -> (show (d))
+                                TString s -> s
+                                TBool b -> case b of True -> "True"
+                                                     False -> "False"
+                                TList l -> (listtostring l)
+listtostring (a:as) = case a of TInt i -> (show (i)) ++ ", " ++ (listtostring as)
+                                TDouble d -> (show (d)) ++ ", " ++ (listtostring as)
+                                TString s -> s ++ ", " ++ (listtostring as)
+                                TBool b -> case b of True -> "True" ++ ", " ++ (listtostring as)
+                                                     False -> "False" ++ ", " ++ (listtostring as)
+                                TList l -> (listtostring l) ++ ", " ++ (listtostring as)
+
+
 -- Our print have not finish so we use error function to show you.
 doCmd :: Cmd -> EnvironmentData -> Fname -> EnvironmentData
 doCmd (Print a)       (v, s, f) n = case (do_operation a v) of (TInt ti) -> (v, (s ++ [show (ti)]), f)
                                                                (TDouble td) -> (v, (s ++ [show (td)]), f)
                                                                (TString ts) -> (v, (s ++ [ts]), f)
+                                                               (TList tl)   -> (v, (s ++ ["[" ++ (listtostring tl) ++ "]"]), f)
                                                                (TBool tb) -> case tb of True -> (v, (s ++ ["True"]), f)
                                                                                         False -> (v, (s ++ ["False"]), f)
 doCmd (Set (a, b))    (v, s, f) n = if (checkset (n, a) v) then error ("Name : " ++ a ++ " in " ++ n ++ " value list. " ++ "Set command can not allow same name in sam function name.")
