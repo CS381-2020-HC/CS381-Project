@@ -268,10 +268,44 @@ fib = [
             ],
             Return (Get "second")
          ],
-         CallFunction "Fib" [("Fib", "n", Get "fib_n")  ],                    -- set the input x in (VInt x)
+         CallFunction "Fib" [("Fib", "n", Get "fib_n")  ],
          Print (Get "return")
       ]
 
+-- This is for testing the fibonacci twice, means input the answer of the fib to do the second times 
+-- The input is 6 now, and the input can change in "Set ("fib_n" function)"
+-- fib(6) = 8
+-- fib(8) = 21
+fib2 :: Prog
+fib2     = [
+         Set ("fib_n", (Val (VInt 6))),    -- Change the input here
+         SetFunction "Fib"
+         [ 
+            ("Fib", "n", Val (VInt 0)) 
+         ]
+         [
+            Begin "Fib", 
+            Set ("i", Val (VInt 1)),
+            Set ("first", Val (VInt 0)),
+            Set ("second", Val (VInt 0)),
+            Set ("temp", Val (VInt 0)  ),
+            For ("i") (Blv_sq (Get "i") (Get "n")) (VInt 1) 
+            [
+               Ifelse (Blv_q (Get "i") (Val (VInt 1))) 
+               [
+                  Update ("Fib", "second", Val(VInt 1))
+               ] [
+                  Update ("Fib", "temp", Get "second"),
+                  Update ("Fib", "second", Add (Get "first") (Get "second")),
+                  Update ("Fib", "first", Get "temp")
+               ]
+            ],
+            Return (Get "second")
+         ],
+         CallFunction "Fib" [("Fib", "n", Get "fib_n")  ],
+         CallFunction "Fib" [("Fib", "n", Get "return")  ],
+         Print (Get "return")
+      ]
 --test :: Expr
 --test = Add (Val (VInt 2)) (Mul (Val (VInt 6))(Val (VInt 3)))
 
