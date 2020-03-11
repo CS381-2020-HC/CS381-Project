@@ -197,6 +197,9 @@ testall = [
 -- the answer is in the value list name m.
 euclidean_algorithm :: Prog
 euclidean_algorithm = [
+                        Set ("euc_first", (Val (VInt 1071))),      -- Change the input here
+                        Set ("euc_second", (Val (VInt 462))),      -- Change the input here
+
                         SetFunction "gcd" 
                         [("gcd", "m", Val (VInt 0)),("gcd", "n", Val (VInt 0))]
                         [Begin "gcd",
@@ -208,15 +211,17 @@ euclidean_algorithm = [
                                  Update ("gcd", "n", Get "t")
                               ],
                         Return (Get "m")],
-                        CallFunction "gcd" [("gcd", "m", Val (VInt 1071)),("gcd", "n", Val (VInt 462))],    
+                        CallFunction "gcd" [("gcd", "m", Get("euc_first")),("gcd", "n", Get ("euc_first"))],    
                         Set ("x", Get "return"),
                         Print (Get "x")
                       ]
 
+-- This is for transfer the Celsius to Fahrenheit and Fahrenheit to Celsius
+-- the inputs are both 50, and the input can change in "Set ("temp_f" or "temp_c" function)"
 temp_C_F_transfer :: Prog         
 temp_C_F_transfer =  [
-                        Set ("temp_f", (Val (VDouble 50))),
-                        Set ("temp_c", (Val (VDouble 50))),
+                        Set ("temp_f", (Val (VDouble 50))),      -- Change the input here
+                        Set ("temp_c", (Val (VDouble 50))),      -- Change the input here
                         SetFunction "FtoC"
                         [("FtoC", "f", Val (VDouble 0))]
                         [
@@ -235,8 +240,11 @@ temp_C_F_transfer =  [
                         Print (Add (Val(VString "F:")) (Get "return"))
                      ]
 
+-- This is for testing the fibonacci 
+-- The input is 10 now, and the input can change in "Set ("fib_n" function)"
 fib :: Prog
 fib = [
+         Set ("fib_n", (Val (VInt 10))),    -- Change the input here
          SetFunction "Fib"
          [ 
             ("Fib", "n", Val (VInt 0)) 
@@ -260,7 +268,7 @@ fib = [
             ],
             Return (Get "second")
          ],
-         CallFunction "Fib" [("Fib", "n", Val (VInt 5))],
+         CallFunction "Fib" [("Fib", "n", Get "fib_n")  ],                    -- set the input x in (VInt x)
          Print (Get "return")
       ]
 
