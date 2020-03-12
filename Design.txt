@@ -36,15 +36,109 @@ type errors can be reported at runtime. All of these errors will
 be dealt with through print "TError" and error message. 
 Therefore, there is no undefined operation that happened during runtime.
 
-Implementation
-    There are two semantic domains in our language, the first one 
-    There are three types of semantic domains chosen by this language, 
-including the list of command; the variable consisting of scope name, 
-variable name, and value; and the pair of two data types. Moreover, 
-the most interesting aspect of it is the scope and lifetime of the 
-variable because it can make this language support the local variable 
-with the same name to the global variable. 
+Semantic domains implementation
+    There are two semantic domains in our language, our semantic domains are as below:
 
+    1. do_op :: Expr -> [Var] -> Value
+    	This function is do operation in all expression
+			Expr  -> All of expression
+			[Var] -> Keep variable list
+			Value -> Value after calculate
 
-type safe
-synmatic domain
+	2. do_array_op :: Expr -> [Var] -> Value
+		This function is do array operation
+			Expr  -> Find string and add
+			[Var] -> Keep variable list
+			Value -> Value after calculate
+
+	3. do_Bool :: Expb -> [Var] -> Maybe Bool
+		This function is do boolean expression
+			Expb       -> Find conditional expressions
+			[Var]      -> Keep variable list
+			Maybe Bool -> Maybe is for the if input has type error, Bool is get the results of conditional expression
+
+	4. checkconstr :: Value -> Value -> Bool
+		This function is Check the type of two value is same or not
+			Value -> First argument, such as Int, Double, String...
+			Value -> Second argument, such as Int, Double, String...
+			Bool  -> Same will return true, different will return false
+
+	5. constostr :: Value -> String
+		This function is to transfer the value to string for the error information
+			Value  -> Distinguish the type 
+			String -> return the string of type
+
+	6. updatelist :: Var -> [Var] -> [String] -> Maybe ([Var],[String])
+		This function is to update the argument of list
+		Var                    -> The variable which we want to update
+    	[Var]                  -> Variable list which in evironment data
+		[String]               -> The list which we want to print
+		Maybe ([Var],[String]) -> Return the updated information
+
+	7. checkset :: (Fname, Name) -> [Var] -> Bool
+		This function is to check the environment variable has same name or not
+		(Fname, Name) -> Function name and variable name
+		[Var]         -> Variable list
+		Bool          -> Exist same name or not  
+
+	8. listtostring :: [Value] -> String
+		This function is to transfer list to string
+		[Value] -> List
+		String  -> String of the list
+
+	9. doCmd :: Cmd -> EnvData -> Fname -> EnvData
+		This function is to do every Command, such as "set, ifelse, update the variable, for ..."
+		Cmd     -> Command
+		EnvData -> Original environment of data, a.k.a. all information
+		Fname   -> To know which cmd am I
+		EnvData -> Updated environment of data, a.k.a. all information
+
+	10. true / false :: Expb
+		This is syntex sugar to define what is true and false
+		Expb -> The type of boolean
+
+	11. neg :: Value -> Value
+		This is syntex sugar to multiple the input and (-1) to implenment negative.
+		Value -> Original value
+		Value -> Negative original value
+
+	12. not :: Expb -> Expb
+		This is syntex sugar to inverse the boolean
+		Expb -> Original boolean
+		Expb -> Inversed original boolean
+
+	13. and / or :: Expb -> Expb -> Expb
+		This is syntex sugar to do && and || expression
+		Expb -> Expb -> Two boolean argument 
+		Expb         -> Result boolean
+
+	14. remove_func_val :: Fname -> [Var] -> (Fname, [Var])
+		This function is to remove the variable in the function
+		Fname          -> Name of the function
+		[Var]          -> Variable list
+		(Fname, [Var]) -> Output
+
+	15. findfunc :: [(Fname, Prog)] -> Fname -> Prog
+		Find function name is exist or not
+		[(Fname, Prog)] -> The list of funcion name and it's program
+		Fname           -> Function name which you want to find
+		Prog            -> If the function is exist, it will return the program, if it isn't exist, it will return Error
+
+	16. callf :: [Var] -> EnvData -> Fname -> EnvData
+		This function is to call function when you want to call function and undate the variable
+		[Var]   -> Kepp the list of variable
+		EnvData -> Orignal environment data list
+		Fname   -> Which function you want to call
+		EnvData -> Return updated environment data list
+
+	17. doProg :: Prog -> EnvData -> Fname -> EnvData
+		Do the program, included run the function. In other words, it uses in type of Begin.
+		Prog    -> The list of Command
+		EnvData -> Original environment of data, a.k.a. all information
+		Fname   -> Name of the function 
+		EnvData -> Updated environment of data, a.k.a. all information
+
+	18. start :: Prog -> IO ()
+		Start the Program,ToDistinguishFunctionandVariable is because we put function info and variable info in the same list, so this parameter plug in the middle of function (left) and variable (right) 
+		Prog  -> The program
+		IO () -> To print the result of the program

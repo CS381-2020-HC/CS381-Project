@@ -203,6 +203,7 @@ testall = [
 -------------------------------------- Example Start -------------------------------------------
 
 ---------- Good example start -------------
+
 -- This is for testing the 1071 and 462 euclidean algorithm
 -- The inputs are 1071 and 462. The input can change in "Set ("euc_first" or "euc_second" function)"
 euclidean_algorithm :: Prog
@@ -322,18 +323,34 @@ fib2 = [
 
 ---------- Bad example start ------------
 
+-- This example shows error message 
+-- because Mod (a.k.a Remainder) can't accept two different type argument
 bad_1 :: Prog
 bad_1 = [
          --Set("i",),
-            Print (Mod (Val (VDouble 3.0)) (Val (VInt 2)))
+            Print (Mod (Val (VDouble 3.6)) (Val (VInt 2))) -- Can not accept type double to do Mod function
         ]
 
-
+-- This example shows error message 
+-- because this language can not accept set variable twice in a same name.
+-- Instead, you should use Update function.
 bad_2 :: Prog
 bad_2 = [
             Set ("i", Val(VInt 2)),
-            Set ("i", Val(VString "Hello")),
+            Set ("i", Val(VString "Hello")),  -- Can not accept set the existed variable. 
             Print (Get "i")
+        ]
+
+-- This example shows error message 
+-- because this language can not accept String type in Boolean conditional expressions.
+-- Instead, it only accepts Int and Double, and also some of Bool and String .
+bad_3 :: Prog
+bad_3 = [
+            While (Blv_q (Val (VString "a")) (Val (VInt 0))) -- Can not compare String and Int is equal or not
+            [
+               Set ("i" , Val (VString "Hello"))
+            ],
+            Print (Get "return")
         ]
 ----------  Bad example end  ------------
 -------------------------------------- Example End -------------------------------------------
@@ -406,10 +423,10 @@ do_op (Mod a b)          s = do_op_IDS ((do_op a s), (do_op b s)) Remainder
 -- Expr  -> Find string and add
 -- [Var] -> Keep variable list
 -- Value -> Value after calculate
-do_arrayoperation :: Expr -> [Var] -> Value
-do_arrayoperation (Val (VString a))                         s = VString a
-do_arrayoperation (Add (Val (VString a)) (Val (VString b))) s = VString (a ++ b)
-do_arrayoperation _                                         s = TError "do_arrayoperation function type error"
+do_array_op :: Expr -> [Var] -> Value
+do_array_op (Val (VString a))                         s = VString a
+do_array_op (Add (Val (VString a)) (Val (VString b))) s = VString (a ++ b)
+do_array_op _                                         s = TError "do_array_op function type error"
 
 -- Do boolean calculation
 -- Expb       -> Find conditional expressions
@@ -510,8 +527,8 @@ listtostring (a:as) = case a of VInt i -> (show (i)) ++ ", " ++ (listtostring as
                                 VList l -> (listtostring l) ++ ", " ++ (listtostring as)
                                 TError  t -> t ++ ", " ++ (listtostring as)
 
--- Do every Commend, such as "set, ifelse, update the variable, for ..."
--- Cmd     -> Commend
+-- Do every Command, such as "set, ifelse, update the variable, for ..."
+-- Cmd     -> Command
 -- EnvData -> Original environment of data, a.k.a. all information
 -- Fname   -> To know which cmd am I
 -- EnvData -> Updated environment of data, a.k.a. all information
@@ -583,7 +600,7 @@ doCmd (For a b c d) (v, s, f) n = case do_Bool b v of
                                                                         doCmd (For a (Blv_bq i j) c d) newresult n
                                                    _            -> (v, (s ++ ["TError : For only allow <,>,<=,>=,==,/= "]), f) 
                                               else (v, s, f)
-                                    _      -> (v, s ++ ["TError : do_Bool argument type error."], f)
+                                    _      -> (v, s ++ ["TError : For : do_Bool argument type error."], f)
 
 doCmd (While b d) (v, s, f) n = case do_Bool b v of
                                     Just a -> if a then 
@@ -592,7 +609,7 @@ doCmd (While b d) (v, s, f) n = case do_Bool b v of
                                                  in 
                                                    doCmd (While b d) result n
                                               else (v, s, f)
-                                    _      -> (v, s ++ ["TError : do_Bool argument type error."], f)
+                                    _      -> (v, s ++ ["TError : While : do_Bool argument type error."], f)
 
 
 --------------------------------- Syntex sugar start ------------------------------------------
@@ -633,7 +650,7 @@ or l r = case do_Bool l [] of
 
 -- Remove the variable in the function
 -- Fname          -> Which function
--- [Var]          -> Variable Info
+-- [Var]          -> Variable list
 -- (Fname, [Var]) -> Output
 remove_func_val :: Fname -> [Var] -> (Fname, [Var])
 remove_func_val a []             = (a, [])
@@ -660,7 +677,7 @@ callf []     s n = s
 callf (x:xs) s n = callf xs (doCmd (Update x) s n) n
 
 -- Do the program, included run the function. In other words, it uses in type of Begin.
--- Prog    -> The list of commend
+-- Prog    -> The list of Command
 -- EnvData -> Original environment of data, a.k.a. all information
 -- Fname   -> Name of the function 
 -- EnvData -> Updated environment of data, a.k.a. all information
@@ -673,11 +690,12 @@ doProg ((Begin a):xs)            s         n = doProg xs s a
 doProg ((End a):xs)              (v, s, f) n = let (nn, ns) = (remove_func_val a v) in doProg xs (ns, s, f) nn
 doProg (x:xs)                    s         n = doProg xs (doCmd x s n) n
 
--- Start the program
+-- Start the program, ToDistinguishFunctionandVariable is because we put function info and variable info in the same list
+-- So this parameter plug in the middle of function (left) and variable (right) 
 -- Prog  -> The program
 -- IO () -> To print the result of the program
 start :: Prog -> IO ()
 start [] = putStrLn "Nothing"
-start a  = let (v, s, f) = (doProg a ([("main", "elnghlujbnasdhbkj", Val (VString "123"))], [], []) "main") in putStrLn (intercalate "\n" s)
+start a  = let (v, s, f) = (doProg a ([("main", "ToDistinguishFunctionandVariable", Val (VString "TodistinguishFunctionandVariable"))], [], []) "main") in putStrLn (intercalate "\n" s)
 
-
+--hi
