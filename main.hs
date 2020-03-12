@@ -64,7 +64,7 @@ data Cmd = Begin Fname
 data Expr = Get Name
           | Val Value
           | Add Expr Expr    -- +
-          | Mul Expr Expr    -- *
+          | Mul Expr Expr    -- (*)
           | Mis Expr Expr    -- -
           | Div Expr Expr    -- /
           | Mod Expr Expr    -- %
