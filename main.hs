@@ -15,7 +15,7 @@ data Value = VInt Int         -- Int
            | VString String   -- String
            | VBool Bool       -- Bool
            | VList [Value]    -- List
-           | TError           -- not designe yet.
+           | TError String    -- Error Info
            deriving (Eq, Show)
 
 -- Fname is the Function Name.
@@ -332,29 +332,29 @@ do_op_IDS (VDouble a, VDouble b)    Divide = VDouble (a / b)
 do_op_IDS (VInt a, VDouble b)       Divide = VDouble ((fromIntegral a) / b)
 do_op_IDS (VDouble a, VInt b)       Divide = VDouble (a / (fromIntegral b))
 do_op_IDS (VInt a, VInt b)       Remainder = VInt (a `mod` b) 
-do_op_IDS (VDouble a, VDouble b) Remainder = error "Mod only can input two Int."
-do_op_IDS (VInt a, VDouble b)    Remainder = error "Mod only can input two Int."
-do_op_IDS (VDouble a, VInt b)    Remainder = error "Mod only can input two Int."
+do_op_IDS (VDouble a, VDouble b) Remainder = TError "Mod only can input two Int."
+do_op_IDS (VInt a, VDouble b)    Remainder = TError "Mod only can input two Int."
+do_op_IDS (VDouble a, VInt b)    Remainder = TError "Mod only can input two Int."
 do_op_IDS _                              a = case a of 
-                                                Plus -> error "Bool and TError can not do the Add operation."
-                                                Multiply -> error "String, Bool, List, and TError can not do the Mul operation."
-                                                Minus -> error "String, Bool, List, and TError can not do the Mis operation."
-                                                Divide -> error "String, Bool, List, and TError can not do the Div operation."
-                                                Remainder -> error "Mod only can input two Int."
+                                                Plus -> TError "Bool and TError can not do the Add operation."
+                                                Multiply -> TError "String, Bool, List, and TError can not do the Mul operation."
+                                                Minus -> TError "String, Bool, List, and TError can not do the Mis operation."
+                                                Divide -> TError "String, Bool, List, and TError can not do the Div operation."
+                                                Remainder -> TError "Mod only can input two Int."
 
 findVar :: Name -> [Var] -> Value
-findVar a [] = error ("Can not find the name " ++ a ++ " in value list.")
+findVar a [] = TError ("Can not find the name " ++ a ++ " in value list.")
 findVar a ((d, e, f):xs) = if a == e then case f of Val x -> x else findVar a xs
 
 do_op :: Expr -> [Var] -> Value
 do_op (Get a)            s = findVar a s
 -- do_op (Val (VString _ )) s = error "do_op function can not allow String Value."
-do_op (Val (VBool _ ))   s = error "do_op function can not allow Bool Value."
+do_op (Val (VBool _ ))   s = TError "do_op function can not allow Bool Value."
 do_op (Val a)            s = a
 do_op (Add a b)          s = case ((do_op a s), (do_op b s))of 
-                                 (VList a, VList b)     -> if checkconstr (VList a) (VList b) then VList (a ++ b) else error "Two List cound not add together because the type not same."
-                                 (VList (a:as), b)      -> if checkconstr a b then VList ((a:as) ++ [b]) else error ((constostr b) ++ " could not match the list.")
-                                 (a, VList (b:bs))      -> if checkconstr a b then VList (a:b:bs) else error ((constostr a) ++ " could not match the list.")
+                                 (VList a, VList b)     -> if checkconstr (VList a) (VList b) then VList (a ++ b) else TError "Two List cound not add together because the type not same."
+                                 (VList (a:as), b)      -> if checkconstr a b then VList ((a:as) ++ [b]) else TError ((constostr b) ++ " could not match the list.")
+                                 (a, VList (b:bs))      -> if checkconstr a b then VList (a:b:bs) else TError ((constostr a) ++ " could not match the list.")
                                  (a,b)                  -> do_op_IDS (a, b) Plus        
 do_op (Mul a b)          s = do_op_IDS ((do_op a s), (do_op b s)) Multiply       
 do_op (Mis a b)          s = do_op_IDS ((do_op a s), (do_op b s)) Minus       
@@ -364,39 +364,40 @@ do_op (Mod a b)          s = do_op_IDS ((do_op a s), (do_op b s)) Remainder
 do_arrayoperation :: Expr -> [Var] -> Value
 do_arrayoperation (Val (VString a))                         s = VString a
 do_arrayoperation (Add (Val (VString a)) (Val (VString b))) s = VString (a ++ b)
-do_arrayoperation _                                         s = error "do_arrayoperation function type error"
+do_arrayoperation _                                         s = TError "do_arrayoperation function type error"
 
-do_Bool :: Expb -> [Var] -> Bool
+
+do_Bool :: Expb -> [Var] -> Maybe Bool
 do_Bool (Blv_s a b)  s = case ((do_op a s), (do_op b s)) of 
-                           ((VInt c), (VInt d))       -> c < d
-                           ((VDouble c), (VDouble d)) -> c < d
-                           _                          -> error "Value not match. Only can compare two Int or two Double."
+                           ((VInt c), (VInt d))       -> Just (c < d)
+                           ((VDouble c), (VDouble d)) -> Just (c < d)
+                           _                          -> Nothing -- error "Value not match. Only can compare two Int or two Double."
 do_Bool (Blv_b a b)  s = case ((do_op a s), (do_op b s)) of 
-                           ((VInt c), (VInt d))       -> c > d
-                           ((VDouble c), (VDouble d)) -> c > d
-                           _                          -> error "Value not match. Only can compare two Int or two Double."
+                           ((VInt c), (VInt d))       -> Just (c > d)
+                           ((VDouble c), (VDouble d)) -> Just (c > d)
+                           _                          -> Nothing -- error "Value not match. Only can compare two Int or two Double."
 do_Bool (Blv_q a b)  s = case ((do_op a s), (do_op b s)) of 
-                           ((VInt c), (VInt d))       -> c == d
-                           ((VDouble c), (VDouble d)) -> c == d
-                           ((VString c), (VString d)) -> c == d
-                           ((VBool c), (VBool d))     -> c == d
-                           _                          -> error "Value not match. Only can compare two Int or two Double."
+                           ((VInt c), (VInt d))       -> Just (c == d)
+                           ((VDouble c), (VDouble d)) -> Just (c == d)
+                           ((VString c), (VString d)) -> Just (c == d)
+                           ((VBool c), (VBool d))     -> Just (c == d)
+                           _                          -> Nothing -- Nothing -- error "Value not match. Only can compare two Int or two Double."
 do_Bool (Blv_nq a b) s = case ((do_op a s), (do_op b s)) of 
-                           ((VInt c), (VInt d))       -> c /= d
-                           ((VDouble c), (VDouble d)) -> c /= d
-                           ((VString c), (VString d)) -> c /= d
-                           ((VBool c), (VBool d))     -> c /= d
-                           _                          -> error "Value not match. Only can compare two Int or two Double."
+                           ((VInt c), (VInt d))       -> Just (c /= d)
+                           ((VDouble c), (VDouble d)) -> Just (c /= d)
+                           ((VString c), (VString d)) -> Just (c /= d)
+                           ((VBool c), (VBool d))     -> Just (c /= d)
+                           _                          -> Nothing -- error "Value not match. Only can compare two Int or two Double."
 do_Bool (Blv_sq a b) s = case ((do_op a s), (do_op b s)) of 
-                           ((VInt c), (VInt d))       -> c <= d
-                           ((VDouble c), (VDouble d)) -> c <= d
-                           _                          -> error "Value not match. Only can compare two Int or two Double."
+                           ((VInt c), (VInt d))       -> Just (c <= d)
+                           ((VDouble c), (VDouble d)) -> Just (c <= d)
+                           _                          -> Nothing -- error "Value not match. Only can compare two Int or two Double."
 do_Bool (Blv_bq a b) s = case ((do_op a s), (do_op b s)) of 
-                           ((VInt c), (VInt d))       -> c >= d
-                           ((VDouble c), (VDouble d)) -> c >= d
-                           _                          -> error "Value not match. Only can compare two Int or two Double."
-do_Bool (Bli a)      s = if a /= 0 then True else False
-do_Bool (GetBool a)  s = a
+                           ((VInt c), (VInt d))       -> Just (c >= d)
+                           ((VDouble c), (VDouble d)) -> Just (c >= d)
+                           _                          -> Nothing -- error "Value not match. Only can compare two Int or two Double."
+do_Bool (Bli a)      s = if a /= 0 then Just True else Just False
+do_Bool (GetBool a)  s = Just a
 
 checkconstr :: Value -> Value -> Bool
 checkconstr (VInt a) (VInt b)             = True
@@ -412,19 +413,19 @@ constostr (VDouble _ ) = "VDouble"
 constostr (VString _ ) = "VString"
 constostr (VBool   _ ) = "VBool"
 constostr (VList   _ ) = "VList"
-constostr (TError    ) = "TError"
+constostr (TError  _ ) = "TError"
 
-updatelist :: Var -> [Var] -> Maybe [Var]
-updatelist a []                   = Nothing
-updatelist (a, b, c) ((d,e,f):xs) = if a == d && b == e then 
+updatelist :: Var -> [Var] -> [String] -> Maybe ([Var],[String])
+updatelist a []                   s = Nothing
+updatelist (a, b, c) ((d,e,f):xs) s = if a == d && b == e then 
                                        case (f, c) of 
-                                          (Val g, Val h) -> if (checkconstr g h) then Just ((d, e, c):xs) 
-                                                            else error "Update result not match the Value."
-                                          _              -> error ("Wrong value in Function Name : " ++ d ++ " Value Name : " ++ e)
-                                    else 
-                                       case (updatelist (a, b, c) xs) of 
-                                          Just x  -> Just ((d,e,f):(x))
-                                          Nothing -> Nothing
+                                          (Val g, Val h) -> if (checkconstr g h) then Just (((d, e, c):xs),s) 
+                                                            else Just (((d, e, Val (TError "Update result not match the Value.")):xs),s++ ["TError : Update result not match the Value."])
+                                          _              -> Nothing
+                                      else 
+                                       case (updatelist (a, b, c) xs s) of 
+                                          Just (x,ns)  -> Just (((d,e,f):(x)),ns)
+                                          Nothing      -> Nothing
 
 checkset :: (Fname, Name) -> [Var] -> Bool
 checkset a []                  = False
@@ -438,12 +439,14 @@ listtostring (a:[]) = case a of VInt    i -> (show (i))
                                                 True -> "True"
                                                 False -> "False"
                                 VList   l -> (listtostring l)
+                                TError  t -> "TError : " ++ t
 listtostring (a:as) = case a of VInt i -> (show (i)) ++ ", " ++ (listtostring as)
                                 VDouble d -> (show (d)) ++ ", " ++ (listtostring as)
                                 VString s -> s ++ ", " ++ (listtostring as)
                                 VBool b -> case b of True -> "True" ++ ", " ++ (listtostring as)
                                                      False -> "False" ++ ", " ++ (listtostring as)
                                 VList l -> (listtostring l) ++ ", " ++ (listtostring as)
+                                TError  t -> "TError : " ++ t ++ ", " ++ (listtostring as)
 
 -- Our print have not finish so we use error function to show you.
 doCmd :: Cmd -> EnvData -> Fname -> EnvData
@@ -456,69 +459,79 @@ doCmd (Print a) (v, s, f) n = case (do_op a v) of
                                                    True  -> (v, (s ++ ["True"]), f)
                                                    False -> (v, (s ++ ["False"]), f)
 doCmd (Set (a, b)) (v, s, f) n = if (checkset (n, a) v) then 
-                                    error ("Name : " ++ a ++ " in " ++ n ++ " value list. " ++ "Set command can not allow same name in sam function name.")
+                                    (v, (s ++ [("Name : " ++ a ++ " in " ++ n ++ " value list. " ++ "Set command can not allow same name in sam function name.")]), f) 
                                  else 
                                     let 
                                        ans = do_op b v 
                                     in 
-                                       (((n, a, (Val (ans))):v), s, f)
+                                        case ans of 
+                                            TError te -> (((n, a, (Val (ans))):v), (s ++ ["TError : " ++ te]), f)
+                                            _         -> (((n, a, (Val (ans))):v), s, f)
                                                         
-doCmd (Ifelse a b c) (v, s, f) n = if (do_Bool a v) then doProg b (v, s, f) n
-                                   else doProg c (v, s, f) n
-doCmd (Update (a, b, c)) (v, s, f) n = case (updatelist (a, b, Val (do_op c v)) v) of 
-                                          (Just x) -> (x, s, f)
-                                          (Nothing) -> error ("Value name " ++ b ++ " not in function " ++ n ++ " value list.")
---doCmd (Operation a)  s = do_op a s
-doCmd (For a b c d) (v, s, f) n = if (do_Bool b v) then 
-                                    case b of 
-                                       (Blv_s i j) ->  let 
-                                                            (nv, ns, nf) = (doProg d (v, s, f) n)
-                                                            add = do_op_IDS ((do_op i nv), c) Plus
-                                                            newresult = doCmd (Update (n, a, (Val add))) (nv, ns, nf) n
-                                                       in 
-                                                            doCmd (For a (Blv_s i j) c d) newresult n
-                                       (Blv_q i j) ->  let 
-                                                            (nv, ns, nf) = (doProg d (v, s, f) n)
-                                                            add = do_op_IDS ((do_op i nv), c) Plus
-                                                            newresult = doCmd (Update (n, a, (Val add))) (nv, ns, nf) n
-                                                       in 
-                                                            doCmd (For a (Blv_q i j) c d) newresult n
-                                       (Blv_nq i j) -> let 
-                                                            (nv, ns, nf) = (doProg d (v, s, f) n)
-                                                            add = do_op_IDS ((do_op i nv), c) Plus
-                                                            newresult = doCmd (Update (n, a, (Val add))) (nv, ns, nf) n
-                                                       in 
-                                                            doCmd (For a (Blv_nq i j) c d) newresult n
-                                       (Blv_b i j) ->  let 
-                                                            (nv, ns, nf) = (doProg d (v, s, f) n)
-                                                            add = do_op_IDS ((do_op i nv), c) Plus
-                                                            newresult = doCmd (Update (n, a, (Val add))) (nv, ns, nf) n
-                                                       in 
-                                                            doCmd (For a (Blv_b i j) c d) newresult n
-                                       (Blv_sq i j) -> let 
-                                                            (nv, ns, nf) = (doProg d (v, s, f) n)
-                                                            add = do_op_IDS ((do_op i nv), c) Plus
-                                                            newresult = doCmd (Update (n, a, (Val add))) (nv, ns, nf) n
-                                                       in 
-                                                            doCmd (For a (Blv_sq i j) c d) newresult n
-                                       (Blv_bq i j) -> let 
-                                                            (nv, ns, nf) = (doProg d (v, s, f) n)
-                                                            add = do_op_IDS ((do_op i nv), c) Plus
-                                                            newresult = doCmd (Update (n, a, (Val add))) (nv, ns, nf) n
-                                                       in 
-                                                            doCmd (For a (Blv_bq i j) c d) newresult n
-                                       _            -> error "For only allow <,>,<=,>=,==,/= "
-                                  else (v, s, f)
+doCmd (Ifelse a b c) (v, s, f) n = case do_Bool a v of
+                                    Just a -> if a then doProg b (v, s, f) n
+                                              else doProg c (v, s, f) n
+                                    _      -> (v, s ++ ["TError : do_Bool argument type error."], f)
+doCmd (Update (a, b, c)) (v, s, f) n = case (updatelist (a, b, Val (do_op c v)) v s) of 
+                                          Just (x,ns) -> (x, ns, f)
+                                          Nothing -> (v, s ++ ["TError : " ++ "Value name " ++ b ++ " not in function " ++ n ++ " value list."], f)
+doCmd (For a b c d) (v, s, f) n = case do_Bool b v of
+                                    Just e -> if e then 
+                                                case b of 
+                                                   (Blv_s i j) ->  let 
+                                                                        (nv, ns, nf) = (doProg d (v, s, f) n)
+                                                                        add = do_op_IDS ((do_op i nv), c) Plus
+                                                                        newresult = doCmd (Update (n, a, (Val add))) (nv, ns, nf) n
+                                                                   in 
+                                                                        doCmd (For a (Blv_s i j) c d) newresult n
+                                                   (Blv_q i j) ->  let 
+                                                                        (nv, ns, nf) = (doProg d (v, s, f) n)
+                                                                        add = do_op_IDS ((do_op i nv), c) Plus
+                                                                        newresult = doCmd (Update (n, a, (Val add))) (nv, ns, nf) n
+                                                                   in 
+                                                                        doCmd (For a (Blv_q i j) c d) newresult n
+                                                   (Blv_nq i j) -> let 
+                                                                        (nv, ns, nf) = (doProg d (v, s, f) n)
+                                                                        add = do_op_IDS ((do_op i nv), c) Plus
+                                                                        newresult = doCmd (Update (n, a, (Val add))) (nv, ns, nf) n
+                                                                   in 
+                                                                        doCmd (For a (Blv_nq i j) c d) newresult n
+                                                   (Blv_b i j) ->  let 
+                                                                        (nv, ns, nf) = (doProg d (v, s, f) n)
+                                                                        add = do_op_IDS ((do_op i nv), c) Plus
+                                                                        newresult = doCmd (Update (n, a, (Val add))) (nv, ns, nf) n
+                                                                   in 
+                                                                        doCmd (For a (Blv_b i j) c d) newresult n
+                                                   (Blv_sq i j) -> let 
+                                                                        (nv, ns, nf) = (doProg d (v, s, f) n)
+                                                                        add = do_op_IDS ((do_op i nv), c) Plus
+                                                                        newresult = doCmd (Update (n, a, (Val add))) (nv, ns, nf) n
+                                                                   in 
+                                                                        doCmd (For a (Blv_sq i j) c d) newresult n
+                                                   (Blv_bq i j) -> let 
+                                                                        (nv, ns, nf) = (doProg d (v, s, f) n)
+                                                                        add = do_op_IDS ((do_op i nv), c) Plus
+                                                                        newresult = doCmd (Update (n, a, (Val add))) (nv, ns, nf) n
+                                                                   in 
+                                                                        doCmd (For a (Blv_bq i j) c d) newresult n
+                                                   _            -> (v, (s ++ ["For only allow <,>,<=,>=,==,/= "]), f) 
+                                              else (v, s, f)
+                                    _      -> (v, s ++ ["TError : do_Bool argument type error."], f)
 
-doCmd (While b d) (v, s, f) n =
-    if (do_Bool b v) then 
-       let 
-         result = (doProg d (v, s, f) n)
-       in 
-         doCmd (While b d) result n
-    else (v, s, f)
+doCmd (While b d) (v, s, f) n = case do_Bool b v of
+                                    Just a -> if a then 
+                                                 let 
+                                                   result = (doProg d (v, s, f) n)
+                                                 in 
+                                                   doCmd (While b d) result n
+                                              else (v, s, f)
+                                    _      -> (v, s ++ ["TError : do_Bool argument type error."], f)
+
 
 --syntex sugar
+-- for :: String -> Expb -> Value -> Prog -> Cmd
+-- for s e v p = While e  
+
 true :: Expb
 true = Blv_q (Val (VInt 0)) (Val (VInt 0))
 
@@ -528,16 +541,22 @@ false = Blv_q (Val (VInt 0)) (Val (VInt 1))
 neg :: Value -> Value
 neg (VInt    e) = VInt ((-1) * e)
 neg (VDouble e) = VDouble ((-1) * e)
-neg _ = TError
+neg _           = TError "Neg function has wrong type"
 
 not :: Expb -> Expb
-not e = if (do_Bool e []) then false else true
+not e = case do_Bool e [] of 
+          Just a -> if a then false else true
+          _      -> false
 
 and :: Expb -> Expb -> Expb
-and l r = if (do_Bool l []) then r else false
+and l r = case do_Bool l [] of 
+            Just a -> if a then r else false
+            _      -> false
 
 or :: Expb -> Expb -> Expb
-or l r = if (do_Bool l []) then true else r
+or l r = case do_Bool l [] of 
+            Just a -> if a then true else r
+            _      -> false
 
 remove_func_val :: Fname -> [Var] -> (Fname, [Var])
 remove_func_val a []             = (a, [])
@@ -551,7 +570,7 @@ remove_func_val a ((b, c, d):xs) = if a == b then
                                     else (b, ((b, c, d):xs))
 
 findfunc :: [(Fname, Prog)] -> Fname -> Prog
-findfunc []          n = error "Function not set."
+findfunc []          n = [Print (Val (TError "Function not set."))]
 findfunc ((a, b):xs) n = if a == n then b
                          else findfunc xs n
 
