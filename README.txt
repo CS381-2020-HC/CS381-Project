@@ -33,7 +33,7 @@ testall = [
                 ]
          ]
 
-The way to use this test is: doProg testall [] "main"
+The way to use this test is: start testall
 This is a good test for all functions. This example includes all functions. This ideal output of this test.
 The ideal output:
 [("main","j",Val (TInt 9)),("main","i",Val (TInt 10))]

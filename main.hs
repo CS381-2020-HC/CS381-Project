@@ -26,10 +26,6 @@ type Name = String
 -- Define the value list base Value, and it include Function name, value name, and the Expr Value to do the operation.
 type Var = (Fname, Name, Expr)
 
--- This Value will change the name in the fucture.
--- This Value just for know the two value Value in do_op_IDS.
-type LeftRight = (Value, Value)  -- will rewrite the Value name
-
 -- Environment of data, a.k.a. all information
 -- [Var]           -> All variable info
 -- [String]        -> All info which we want to print
@@ -183,7 +179,8 @@ testall = [
                          (Blv_s (Get "i") (Val (VInt 10))) 
                          (VInt 2) 
                          [
-                           (Update ("ifelse", "j", (Add (Get "i") (Val (VInt 1)))))
+                           (Update ("ifelse", "j", (Add (Get "i") (Val (VInt 1))))),
+                           (Print (Get "j"))
                          ],
                      End "for"
                  ] 
@@ -319,10 +316,10 @@ fib2     = [
 -------------------------------------- Example End -------------------------------------------
 
 -- Do operation in Int, Double, and String
--- LeftRight -> Tuple of two argument
--- Oper      -> Which operation will they use
--- Value     -> Value after calculate
-do_op_IDS :: LeftRight -> Oper -> Value
+-- (Value, Value) -> Tuple of two argument
+-- Oper           -> Which operation will they use
+-- Value          -> Value after calculate
+do_op_IDS :: (Value, Value) -> Oper -> Value
 do_op_IDS (VInt a, VInt b)            Plus = VInt (a + b) 
 do_op_IDS (VDouble a, VDouble b)      Plus = VDouble (a + b)
 do_op_IDS (VInt a, VDouble b)         Plus = VDouble ((fromIntegral a) + b)
@@ -576,9 +573,6 @@ doCmd (While b d) (v, s, f) n = case do_Bool b v of
 
 --------------------------------- Syntex sugar start ------------------------------------------
 
--- for :: String -> Expb -> Value -> Prog -> Cmd
--- for s e v p = While e  
-
 -- True 
 true :: Expb
 true = Blv_q (Val (VInt 0)) (Val (VInt 0))
@@ -660,6 +654,6 @@ doProg (x:xs)                    s         n = doProg xs (doCmd x s n) n
 -- IO () -> To print the result of the program
 start :: Prog -> IO ()
 start [] = putStrLn "Nothing"
-start a  = let (v, s, f) = (doProg a ([], [], []) "main") in putStrLn (intercalate "\n" s)
+start a  = let (v, s, f) = (doProg a ([("main", "elnghlujbnasdhbkj", Val (VString "123"))], [], []) "main") in putStrLn (intercalate "\n" s)
 
 
