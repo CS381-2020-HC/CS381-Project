@@ -1,8 +1,11 @@
-module Man where
+module Main where
 -- At First we use Main for module name, but it will get wrong so we change to this name.
 import Data.List
 import Data.Data
 import Data.Function
+
+main :: IO()
+main = return ()
 
 -- Prog is the Value of list Cmd.
 type Prog = [Cmd]
@@ -198,6 +201,8 @@ testall = [
 
 
 -------------------------------------- Example Start -------------------------------------------
+
+---------- Good example start -------------
 -- This is for testing the 1071 and 462 euclidean algorithm
 -- The inputs are 1071 and 462. The input can change in "Set ("euc_first" or "euc_second" function)"
 euclidean_algorithm :: Prog
@@ -283,7 +288,7 @@ fib = [
 -- fib(6) = 8
 -- fib(8) = 21
 fib2 :: Prog
-fib2     = [
+fib2 = [
          Set ("fib_n", (Val (VInt 6))),    -- Change the input here
          SetFunction "Fib"
          [ 
@@ -312,7 +317,25 @@ fib2     = [
          CallFunction "Fib" [("Fib", "n", Get "return")  ],
          Print (Get "return")
       ]
+---------- Good example end -------------
 
+
+---------- Bad example start ------------
+
+bad_1 :: Prog
+bad_1 = [
+         --Set("i",),
+            Print (Mod (Val (VDouble 3.0)) (Val (VInt 2)))
+        ]
+
+
+bad_2 :: Prog
+bad_2 = [
+            Set ("i", Val(VInt 2)),
+            Set ("i", Val(VString "Hello")),
+            Print (Get "i")
+        ]
+----------  Bad example end  ------------
 -------------------------------------- Example End -------------------------------------------
 
 -- Do operation in Int, Double, and String
@@ -472,14 +495,14 @@ listtostring (a:[]) = case a of VInt    i -> (show (i))
                                                 True -> "True"
                                                 False -> "False"
                                 VList   l -> (listtostring l)
-                                TError  t -> "TError : " ++ t
+                                TError  t -> t
 listtostring (a:as) = case a of VInt i -> (show (i)) ++ ", " ++ (listtostring as)
                                 VDouble d -> (show (d)) ++ ", " ++ (listtostring as)
                                 VString s -> s ++ ", " ++ (listtostring as)
                                 VBool b -> case b of True -> "True" ++ ", " ++ (listtostring as)
                                                      False -> "False" ++ ", " ++ (listtostring as)
                                 VList l -> (listtostring l) ++ ", " ++ (listtostring as)
-                                TError  t -> "TError : " ++ t ++ ", " ++ (listtostring as)
+                                TError  t -> t ++ ", " ++ (listtostring as)
 
 -- Do every Commend, such as "set, ifelse, update the variable, for ..."
 -- Cmd     -> Commend
@@ -495,8 +518,9 @@ doCmd (Print a) (v, s, f) n = case (do_op a v) of
                                  (VBool tb)   -> case tb of 
                                                    True  -> (v, (s ++ ["True"]), f)
                                                    False -> (v, (s ++ ["False"]), f)
+                                 (TError te)   -> (v, ( s ++ ["TError : " ++ te]), f)
 doCmd (Set (a, b)) (v, s, f) n = if (checkset (n, a) v) then 
-                                    (v, (s ++ [("Name : " ++ a ++ " in " ++ n ++ " value list. " ++ "Set command can not allow same name in sam function name.")]), f) 
+                                    (v, (s ++ [("TError : Name : " ++ a ++ " in " ++ n ++ " value list. " ++ "Set command can not allow same name in sam function name.")]), f) 
                                  else 
                                     let 
                                        ans = do_op b v 
@@ -511,7 +535,7 @@ doCmd (Ifelse a b c) (v, s, f) n = case do_Bool a v of
                                     _      -> (v, s ++ ["TError : do_Bool argument type error."], f)
 doCmd (Update (a, b, c)) (v, s, f) n = case (updatelist (a, b, Val (do_op c v)) v s) of 
                                           Just (x,ns) -> (x, ns, f)
-                                          Nothing -> (v, s ++ ["TError : " ++ "Value name " ++ b ++ " not in function " ++ n ++ " value list."], f)
+                                          Nothing -> (v, s ++ ["TError : Value name " ++ b ++ " not in function " ++ n ++ " value list."], f)
 doCmd (For a b c d) (v, s, f) n = case do_Bool b v of
                                     Just e -> if e then 
                                                 case b of 
@@ -551,7 +575,7 @@ doCmd (For a b c d) (v, s, f) n = case do_Bool b v of
                                                                         newresult = doCmd (Update (n, a, (Val add))) (nv, ns, nf) n
                                                                    in 
                                                                         doCmd (For a (Blv_bq i j) c d) newresult n
-                                                   _            -> (v, (s ++ ["For only allow <,>,<=,>=,==,/= "]), f) 
+                                                   _            -> (v, (s ++ ["TError : For only allow <,>,<=,>=,==,/= "]), f) 
                                               else (v, s, f)
                                     _      -> (v, s ++ ["TError : do_Bool argument type error."], f)
 
