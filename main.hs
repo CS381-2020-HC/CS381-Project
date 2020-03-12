@@ -29,11 +29,10 @@ type Name = String
 -- Define the value list base Value, and it include Function name, value name, and the Expr Value to do the operation.
 type Var = (Fname, Name, Expr)
 
--- This Value will change the name in the fucture.
--- This Value just for know the two value Value in do_op_IDS.
-type LeftRight = (Value, Value)  -- will rewrite the Value name
-
---------------------------------------------I DONT KNOW--------------------------------------
+-- Environment of data, a.k.a. all information
+-- [Var]           -> All variable info
+-- [String]        -> All info which we want to print
+-- [(Fname, Prog)] -> All function info
 type EnvData = ([Var], [String], [(Fname, Prog)])
 
 -- Define the Cmd data.
@@ -64,7 +63,7 @@ data Cmd = Begin Fname
 data Expr = Get Name
           | Val Value
           | Add Expr Expr    -- +
-          | Mul Expr Expr    -- *
+          | Mul Expr Expr    -- (*)
           | Mis Expr Expr    -- -
           | Div Expr Expr    -- /
           | Mod Expr Expr    -- %
@@ -183,7 +182,8 @@ testall = [
                          (Blv_s (Get "i") (Val (VInt 10))) 
                          (VInt 2) 
                          [
-                           (Update ("ifelse", "j", (Add (Get "i") (Val (VInt 1)))))
+                           (Update ("ifelse", "j", (Add (Get "i") (Val (VInt 1))))),
+                           (Print (Get "j"))
                          ],
                      End "for"
                  ] 
@@ -339,10 +339,10 @@ bad_2 = [
 -------------------------------------- Example End -------------------------------------------
 
 -- Do operation in Int, Double, and String
--- LeftRight -> Tuple of two argument
--- Oper      -> Which operation will they use
--- Value     -> Value after calculate
-do_op_IDS :: LeftRight -> Oper -> Value
+-- (Value, Value) -> Tuple of two argument
+-- Oper           -> Which operation will they use
+-- Value          -> Value after calculate
+do_op_IDS :: (Value, Value) -> Oper -> Value
 do_op_IDS (VInt a, VInt b)            Plus = VInt (a + b) 
 do_op_IDS (VDouble a, VDouble b)      Plus = VDouble (a + b)
 do_op_IDS (VInt a, VDouble b)         Plus = VDouble ((fromIntegral a) + b)
@@ -447,7 +447,7 @@ do_Bool (Blv_bq a b) s = case ((do_op a s), (do_op b s)) of
 do_Bool (Bli a)      s = if a /= 0 then Just True else Just False
 do_Bool (GetBool a)  s = Just a
 
---------------------------------------------I DONT KNOW--------------------------------------
+-- Check the type of two value is same or not
 checkconstr :: Value -> Value -> Bool
 checkconstr (VInt a) (VInt b)             = True
 checkconstr (VDouble a) (VDouble b)       = True
@@ -456,7 +456,7 @@ checkconstr (VBool a) (VBool b)           = True
 checkconstr (VList (a:as)) (VList (b:bs)) = checkconstr a b
 checkconstr a b                           = False
 
---------------------------------------------I DONT KNOW--------------------------------------
+-- Transfer the value to string, this function is for the error info
 constostr :: Value -> String
 constostr (VInt    _ ) = "VInt"
 constostr (VDouble _ ) = "VDouble"
@@ -465,8 +465,11 @@ constostr (VBool   _ ) = "VBool"
 constostr (VList   _ ) = "VList"
 constostr (TError  _ ) = "TError"
 
---------------------------------------------I DONT KNOW--------------------------------------
--- Update list 
+-- Update list
+-- Var                    -> The variable which we want to update
+-- [Var]                  -> Variable list which in evironment data
+-- [String]               -> The list which we want to print
+-- Maybe ([Var],[String]) -> Return the updated info
 updatelist :: Var -> [Var] -> [String] -> Maybe ([Var],[String])
 updatelist a []                   s = Nothing
 updatelist (a, b, c) ((d,e,f):xs) s = if a == d && b == e then 
@@ -479,7 +482,10 @@ updatelist (a, b, c) ((d,e,f):xs) s = if a == d && b == e then
                                           Just (x,ns)  -> Just (((d,e,f):(x)),ns)
                                           Nothing      -> Nothing
 
---------------------------------------------I DONT KNOW--------------------------------------
+-- Check the environment variable has same name or not
+-- (Fname, Name) -> Function name and variable name
+-- [Var]         -> Variable list
+-- Bool          -> Exist same name or not
 checkset :: (Fname, Name) -> [Var] -> Bool
 checkset a []                  = False
 checkset (a, b) ((d, e, f):xs) = if a == d && b == e then True else checkset (a, b) xs
@@ -506,9 +512,9 @@ listtostring (a:as) = case a of VInt i -> (show (i)) ++ ", " ++ (listtostring as
 
 -- Do every Commend, such as "set, ifelse, update the variable, for ..."
 -- Cmd     -> Commend
--- EnvData -> --------------------------------------------I DONT KNOW--------------------------------------
+-- EnvData -> Original environment of data, a.k.a. all information
 -- Fname   -> To know which cmd am I
--- EnvData -> --------------------------------------------I DONT KNOW--------------------------------------
+-- EnvData -> Updated environment of data, a.k.a. all information
 doCmd :: Cmd -> EnvData -> Fname -> EnvData
 doCmd (Print a) (v, s, f) n = case (do_op a v) of 
                                  (VInt ti)    -> (v, (s ++ [show (ti)]), f)
@@ -591,9 +597,6 @@ doCmd (While b d) (v, s, f) n = case do_Bool b v of
 
 --------------------------------- Syntex sugar start ------------------------------------------
 
--- for :: String -> Expb -> Value -> Prog -> Cmd
--- for s e v p = While e  
-
 -- True 
 true :: Expb
 true = Blv_q (Val (VInt 0)) (Val (VInt 0))
@@ -643,21 +646,24 @@ remove_func_val a ((b, c, d):xs) = if a == b then
                                        else remove_func_val a xs
                                     else (b, ((b, c, d):xs))
 
---------------------------------------------I DONT KNOW--------------------------------------
+-- Find function name is exist or not
+-- [(Fname, Prog)] -> The list of funcion name and it's program
+-- Fname           -> Function name which you want to find
+-- Prog            -> If the function is exist, it will return the program, if it isn't exist, it will return Error
 findfunc :: [(Fname, Prog)] -> Fname -> Prog
 findfunc []          n = [Print (Val (TError "Function not set."))]
 findfunc ((a, b):xs) n = if a == n then b
                          else findfunc xs n
---------------------------------------------I DONT KNOW--------------------------------------
+-- Call function when you want to call function
 callf :: [Var] -> EnvData -> Fname -> EnvData
 callf []     s n = s
 callf (x:xs) s n = callf xs (doCmd (Update x) s n) n
 
--- Do the program
+-- Do the program, included run the function. In other words, it uses in type of Begin.
 -- Prog    -> The list of commend
--- EnvData -> --------------------------------------------I DONT KNOW--------------------------------------
--- Fname   -> Name of the program --------------------------------------------I DONT KNOW--------------------------------------
--- EnvData -> --------------------------------------------I DONT KNOW--------------------------------------
+-- EnvData -> Original environment of data, a.k.a. all information
+-- Fname   -> Name of the function 
+-- EnvData -> Updated environment of data, a.k.a. all information
 doProg :: Prog -> EnvData -> Fname -> EnvData
 doProg []                        s         n = s
 doProg ((SetFunction a b c):xs)  (v, s, f) n = doProg xs (v ++ b, s, ((a, c):f)) n
@@ -672,6 +678,6 @@ doProg (x:xs)                    s         n = doProg xs (doCmd x s n) n
 -- IO () -> To print the result of the program
 start :: Prog -> IO ()
 start [] = putStrLn "Nothing"
-start a  = let (v, s, f) = (doProg a ([], [], []) "main") in putStrLn (intercalate "\n" s)
+start a  = let (v, s, f) = (doProg a ([("main", "elnghlujbnasdhbkj", Val (VString "123"))], [], []) "main") in putStrLn (intercalate "\n" s)
 
 

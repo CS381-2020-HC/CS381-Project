@@ -31,17 +31,20 @@ at the beginning, the mutable variable and immutable local variable
 are also designed based on the invertibility principle through the 
 scope and lifetime. Therefore, all variables can be recycled after the 
 end of their lifetime.
-    In addition, this language is type-safe that not only the static 
-type errors can be detected at compile time but also the dynamic type 
-errors can be reported at runtime. Such that all of these errors will 
-be dealt with through the error print or "Nothing" result of Maybe 
-type. Therefore, there is no undefined operation that happened during 
-runtime.
+    In addition, this language is type-safe that not only the dynamic 
+type errors can be reported at runtime. All of these errors will 
+be dealt with through print "TError" and error message. 
+Therefore, there is no undefined operation that happened during runtime.
 
 Implementation
+    There are two semantic domains in our language, the first one 
     There are three types of semantic domains chosen by this language, 
 including the list of command; the variable consisting of scope name, 
 variable name, and value; and the pair of two data types. Moreover, 
 the most interesting aspect of it is the scope and lifetime of the 
 variable because it can make this language support the local variable 
 with the same name to the global variable. 
+
+
+type safe
+synmatic domain
