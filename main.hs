@@ -306,9 +306,11 @@ fib2     = [
          CallFunction "Fib" [("Fib", "n", Get "return")  ],
          Print (Get "return")
       ]
---test :: Expr
---test = Add (Val (VInt 2)) (Mul (Val (VInt 6))(Val (VInt 3)))
 
+-- Do operation in Int, Double, and String
+-- LeftRight -> Tuple of two argument
+-- Oper      -> Which operation will they use
+-- Value     -> Value after calculate
 do_op_IDS :: LeftRight -> Oper -> Value
 do_op_IDS (VInt a, VInt b)            Plus = VInt (a + b) 
 do_op_IDS (VDouble a, VDouble b)      Plus = VDouble (a + b)
@@ -342,10 +344,18 @@ do_op_IDS _                              a = case a of
                                                 Divide -> TError "String, Bool, List, and TError can not do the Div operation."
                                                 Remainder -> TError "Mod only can input two Int."
 
+-- Find Variable 
+-- Name  -> Variable's name
+-- [Var] -> Variable store list
+-- Value -> Variable value
 findVar :: Name -> [Var] -> Value
 findVar a [] = TError ("Can not find the name " ++ a ++ " in value list.")
 findVar a ((d, e, f):xs) = if a == e then case f of Val x -> x else findVar a xs
 
+-- Do operation in all expression
+-- Expr  -> All of expression
+-- [Var] -> Keep variable list
+-- Value -> Value after calculate
 do_op :: Expr -> [Var] -> Value
 do_op (Get a)            s = findVar a s
 -- do_op (Val (VString _ )) s = error "do_op function can not allow String Value."
@@ -361,12 +371,19 @@ do_op (Mis a b)          s = do_op_IDS ((do_op a s), (do_op b s)) Minus
 do_op (Div a b)          s = do_op_IDS ((do_op a s), (do_op b s)) Divide      
 do_op (Mod a b)          s = do_op_IDS ((do_op a s), (do_op b s)) Remainder
 
+-- Do array operation
+-- Expr  -> Find string and add
+-- [Var] -> Keep variable list
+-- Value -> Value after calculate
 do_arrayoperation :: Expr -> [Var] -> Value
 do_arrayoperation (Val (VString a))                         s = VString a
 do_arrayoperation (Add (Val (VString a)) (Val (VString b))) s = VString (a ++ b)
 do_arrayoperation _                                         s = TError "do_arrayoperation function type error"
 
-
+-- Do boolean calculation
+-- Expb       -> Find conditional expressions
+-- [Var]      -> Keep variable list
+-- Maybe Bool -> Maybe is for the type error, Bool is get the results of conditional expression
 do_Bool :: Expb -> [Var] -> Maybe Bool
 do_Bool (Blv_s a b)  s = case ((do_op a s), (do_op b s)) of 
                            ((VInt c), (VInt d))       -> Just (c < d)
@@ -399,6 +416,7 @@ do_Bool (Blv_bq a b) s = case ((do_op a s), (do_op b s)) of
 do_Bool (Bli a)      s = if a /= 0 then Just True else Just False
 do_Bool (GetBool a)  s = Just a
 
+--------------------------------------------I DONT KNOW--------------------------------------
 checkconstr :: Value -> Value -> Bool
 checkconstr (VInt a) (VInt b)             = True
 checkconstr (VDouble a) (VDouble b)       = True
@@ -407,6 +425,7 @@ checkconstr (VBool a) (VBool b)           = True
 checkconstr (VList (a:as)) (VList (b:bs)) = checkconstr a b
 checkconstr a b                           = False
 
+--------------------------------------------I DONT KNOW--------------------------------------
 constostr :: Value -> String
 constostr (VInt    _ ) = "VInt"
 constostr (VDouble _ ) = "VDouble"
@@ -415,6 +434,8 @@ constostr (VBool   _ ) = "VBool"
 constostr (VList   _ ) = "VList"
 constostr (TError  _ ) = "TError"
 
+--------------------------------------------I DONT KNOW--------------------------------------
+-- Update list 
 updatelist :: Var -> [Var] -> [String] -> Maybe ([Var],[String])
 updatelist a []                   s = Nothing
 updatelist (a, b, c) ((d,e,f):xs) s = if a == d && b == e then 
@@ -427,10 +448,14 @@ updatelist (a, b, c) ((d,e,f):xs) s = if a == d && b == e then
                                           Just (x,ns)  -> Just (((d,e,f):(x)),ns)
                                           Nothing      -> Nothing
 
+--------------------------------------------I DONT KNOW--------------------------------------
 checkset :: (Fname, Name) -> [Var] -> Bool
 checkset a []                  = False
 checkset (a, b) ((d, e, f):xs) = if a == d && b == e then True else checkset (a, b) xs
 
+-- Transfer list to string
+-- [Value] -> List
+-- String  -> String of the list
 listtostring :: [Value] -> String
 listtostring (a:[]) = case a of VInt    i -> (show (i))
                                 VDouble d -> (show (d))
@@ -448,7 +473,11 @@ listtostring (a:as) = case a of VInt i -> (show (i)) ++ ", " ++ (listtostring as
                                 VList l -> (listtostring l) ++ ", " ++ (listtostring as)
                                 TError  t -> "TError : " ++ t ++ ", " ++ (listtostring as)
 
--- Our print have not finish so we use error function to show you.
+-- Do every Commend, such as "set, ifelse, update the variable, for ..."
+-- Cmd     -> Commend
+-- EnvData -> --------------------------------------------I DONT KNOW--------------------------------------
+-- Fname   -> To know which cmd am I
+-- EnvData -> --------------------------------------------I DONT KNOW--------------------------------------
 doCmd :: Cmd -> EnvData -> Fname -> EnvData
 doCmd (Print a) (v, s, f) n = case (do_op a v) of 
                                  (VInt ti)    -> (v, (s ++ [show (ti)]), f)
@@ -528,36 +557,49 @@ doCmd (While b d) (v, s, f) n = case do_Bool b v of
                                     _      -> (v, s ++ ["TError : do_Bool argument type error."], f)
 
 
---syntex sugar
+--------------------------------- Syntex sugar start ------------------------------------------
+
 -- for :: String -> Expb -> Value -> Prog -> Cmd
 -- for s e v p = While e  
 
+-- True 
 true :: Expb
 true = Blv_q (Val (VInt 0)) (Val (VInt 0))
 
+-- False
 false :: Expb
 false = Blv_q (Val (VInt 0)) (Val (VInt 1))
 
+-- Do negative in number
 neg :: Value -> Value
 neg (VInt    e) = VInt ((-1) * e)
 neg (VDouble e) = VDouble ((-1) * e)
 neg _           = TError "Neg function has wrong type"
 
+-- Do "not" in two boolean
 not :: Expb -> Expb
 not e = case do_Bool e [] of 
           Just a -> if a then false else true
           _      -> false
 
+-- Do "and" in two boolean
 and :: Expb -> Expb -> Expb
 and l r = case do_Bool l [] of 
             Just a -> if a then r else false
             _      -> false
 
+-- Do "or" in two boolean
 or :: Expb -> Expb -> Expb
 or l r = case do_Bool l [] of 
             Just a -> if a then true else r
             _      -> false
 
+--------------------------------- Syntex sugar end ------------------------------------------
+
+-- Remove the variable in the function
+-- Fname          -> Which function
+-- [Var]          -> Variable Info
+-- (Fname, [Var]) -> Output
 remove_func_val :: Fname -> [Var] -> (Fname, [Var])
 remove_func_val a []             = (a, [])
 remove_func_val a ((b, c, d):xs) = if a == b then 
@@ -569,15 +611,21 @@ remove_func_val a ((b, c, d):xs) = if a == b then
                                        else remove_func_val a xs
                                     else (b, ((b, c, d):xs))
 
+--------------------------------------------I DONT KNOW--------------------------------------
 findfunc :: [(Fname, Prog)] -> Fname -> Prog
 findfunc []          n = [Print (Val (TError "Function not set."))]
 findfunc ((a, b):xs) n = if a == n then b
                          else findfunc xs n
-
+--------------------------------------------I DONT KNOW--------------------------------------
 callf :: [Var] -> EnvData -> Fname -> EnvData
 callf []     s n = s
 callf (x:xs) s n = callf xs (doCmd (Update x) s n) n
 
+-- Do the program
+-- Prog    -> The list of commend
+-- EnvData -> --------------------------------------------I DONT KNOW--------------------------------------
+-- Fname   -> Name of the program --------------------------------------------I DONT KNOW--------------------------------------
+-- EnvData -> --------------------------------------------I DONT KNOW--------------------------------------
 doProg :: Prog -> EnvData -> Fname -> EnvData
 doProg []                        s         n = s
 doProg ((SetFunction a b c):xs)  (v, s, f) n = doProg xs (v ++ b, s, ((a, c):f)) n
@@ -587,6 +635,9 @@ doProg ((Begin a):xs)            s         n = doProg xs s a
 doProg ((End a):xs)              (v, s, f) n = let (nn, ns) = (remove_func_val a v) in doProg xs (ns, s, f) nn
 doProg (x:xs)                    s         n = doProg xs (doCmd x s n) n
 
+-- Start the program
+-- Prog  -> The program
+-- IO () -> To print the result of the program
 start :: Prog -> IO ()
 start [] = putStrLn "Nothing"
 start a  = let (v, s, f) = (doProg a ([], [], []) "main") in putStrLn (intercalate "\n" s)
