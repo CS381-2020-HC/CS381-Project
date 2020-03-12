@@ -1,6 +1,5 @@
 module Man where
 -- At First we use Main for module name, but it will get wrong so we change to this name.
-
 import Data.List
 import Data.Data
 import Data.Function
@@ -31,6 +30,7 @@ type Var = (Fname, Name, Expr)
 -- This Value just for know the two value Value in do_op_IDS.
 type LeftRight = (Value, Value)  -- will rewrite the Value name
 
+--------------------------------------------I DONT KNOW--------------------------------------
 type EnvData = ([Var], [String], [(Fname, Prog)])
 
 -- Define the Cmd data.
@@ -82,9 +82,11 @@ data Expb = GetBool Bool
           | Blv_bq Expr Expr  -- Left Bigger and Equal then Right.
           deriving (Eq, Show)
 
+-- To print the result
 data OutPut = Env [Var]
             | Prt [String]
 
+-------------------------------------- Test function start ---------------------------------------
 testoperation :: Expr
 testoperation = Add (Val (VInt 2)) (Mul (Val (VInt 6))(Val (VInt 3)))
 
@@ -192,9 +194,12 @@ testall = [
           End "ifelse",
           End "testall"
           ]
+-------------------------------------- Test function end ---------------------------------------
 
--- this is for testing the 1071 and 462 euclidean algorithm
--- the answer is in the value list name m.
+
+-------------------------------------- Example Start -------------------------------------------
+-- This is for testing the 1071 and 462 euclidean algorithm
+-- The inputs are 1071 and 462. The input can change in "Set ("euc_first" or "euc_second" function)"
 euclidean_algorithm :: Prog
 euclidean_algorithm = [
                         Set ("euc_first", (Val (VInt 1071))),      -- Change the input here
@@ -202,22 +207,23 @@ euclidean_algorithm = [
 
                         SetFunction "gcd" 
                         [("gcd", "m", Val (VInt 0)),("gcd", "n", Val (VInt 0))]
-                        [Begin "gcd",
-                        Set ("t", Val (VInt 1)),
-                        While (Blv_nq (Get "t") (Val (VInt 0))) 
-                              [
-                                 Update ("gcd", "t", Mod (Get "m") (Get "n")),
-                                 Update ("gcd", "m", Get "n"),
-                                 Update ("gcd", "n", Get "t")
-                              ],
-                        Return (Get "m")],
+                        [ Begin "gcd",
+                          Set ("t", Val (VInt 1)),
+                          While (Blv_nq (Get "t") (Val (VInt 0))) 
+                                [
+                                   Update ("gcd", "t", Mod (Get "m") (Get "n")),
+                                   Update ("gcd", "m", Get "n"),
+                                   Update ("gcd", "n", Get "t")
+                                ],
+                          Return (Get "m")
+                        ],
                         CallFunction "gcd" [("gcd", "m", Get("euc_first")),("gcd", "n", Get ("euc_first"))],    
                         Set ("x", Get "return"),
                         Print (Get "x")
                       ]
 
 -- This is for transfer the Celsius to Fahrenheit and Fahrenheit to Celsius
--- the inputs are both 50, and the input can change in "Set ("temp_f" or "temp_c" function)"
+-- The inputs are both 50, and the input can change in "Set ("temp_f" or "temp_c" function)"
 temp_C_F_transfer :: Prog         
 temp_C_F_transfer =  [
                         Set ("temp_f", (Val (VDouble 50))),      -- Change the input here
@@ -306,6 +312,8 @@ fib2     = [
          CallFunction "Fib" [("Fib", "n", Get "return")  ],
          Print (Get "return")
       ]
+
+-------------------------------------- Example End -------------------------------------------
 
 -- Do operation in Int, Double, and String
 -- LeftRight -> Tuple of two argument
