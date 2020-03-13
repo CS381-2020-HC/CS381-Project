@@ -697,5 +697,3 @@ doProg (x:xs)                    s         n = doProg xs (doCmd x s n) n
 start :: Prog -> IO ()
 start [] = putStrLn "Nothing"
 start a  = let (v, s, f) = (doProg a ([("main", "ToDistinguishFunctionandVariable", Val (VString "TodistinguishFunctionandVariable"))], [], []) "main") in putStrLn (intercalate "\n" s)
-
---hi
