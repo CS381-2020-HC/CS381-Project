@@ -20,12 +20,13 @@ core level but also designed based on these two principles
 mentioned above. Moreover, it also represents the completeness 
 principle that can cover all the possible cases.
     Third, there are two types of loop methods, including "for" loop 
-and "while" loop, which are also similar to C language. On the one 
-hand, only this feature is the syntactic sugar level because the "for" 
-loop can be rewritten by the "while" loop. On the other hand, although 
-this feature violates the orthogonality principle, it still follows 
-the style of C language to reduce the adaptation time from the C 
-programmer to this language.
+and "while" loop, which are also similar to C language. And it follows
+C language style. We also design some syntex sugar, such as true, false,
+neg, not, and, and or. Except those syntex sugar, others is Core-Level.
+We didn't transfer for-loop to syntex sugar is because in our while-loop
+it may occur infinite-loop and it don't need to give the variable in the 
+conditional expression. Therefore, we don't want to set a fixed variable to
+for-loop conditional expression.
     Fourth, in addition to being based on those two principles stated 
 at the beginning, the mutable variable and immutable local variable 
 are also designed based on the invertibility principle through the 
