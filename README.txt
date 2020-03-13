@@ -8,12 +8,15 @@ Our language’s name is Modified-C. The paradigm of our language is Imperative 
 
 
 Our language implementation should be intended to be run from GHCi. main.hs should be loaded.
+*All examples need to use "$start [example name]" to run.
+*For example: $ start euclidean_algorithm
 
 
 All examples has been saved in main.hs
-These are four test examples which are small project:
+These are four good test examples which are small project:
 
-
+-- This is for testing the 1071 and 462 euclidean algorithm
+-- The inputs are 1071 and 462. The input can change in "Set ("euc_first" or "euc_second" function)"
 euclidean_algorithm :: Prog
 euclidean_algorithm = [
                         Set ("euc_first", (Val (VInt 1071))),      -- Change the input here
@@ -37,7 +40,10 @@ euclidean_algorithm = [
                       ]
 example result:1071
 
-
+-- This is for testing the fibonacci twice, means input the answer of the fib to do the second times 
+-- The input is 6 now, and the input can change in "Set ("fib_n" function)"
+-- fib(6) = 8
+-- fib(8) = 21
 fib2 :: Prog
 fib2 = [
          Set ("fib_n", (Val (VInt 6))),    -- Change the input here
@@ -70,6 +76,8 @@ fib2 = [
       ]
 example result:21
 
+-- This is for testing the fibonacci 
+-- The input is 10 now, and the input can change in "Set ("fib_n" function)"
 fib :: Prog
 fib = [
          Set ("fib_n", (Val (VInt 10))),    -- Change the input here
@@ -101,6 +109,8 @@ fib = [
       ]
 example result:55
 
+-- This is for transfer the Celsius to Fahrenheit and Fahrenheit to Celsius
+-- The inputs are both 50, and the input can change in "Set ("temp_f" or "temp_c" function)"
 temp_C_F_transfer :: Prog         
 temp_C_F_transfer =  [
                         Set ("temp_f", (Val (VDouble 50))),      -- Change the input here
@@ -126,15 +136,20 @@ example result:
 C:10.0
 F:122.0
 
-there are three bad examples:
+There are three bad examples:
+
+-- This example shows error message 
+-- because Mod (a.k.a Remainder) can't accept two different type argument
 bad_1 :: Prog
 bad_1 = [
-         --Set("i",),
-            Print (Mod (Val (VDouble 3.6)) (Val (VInt 2))) -- Can not accept type double to do Mod function
+          Print (Mod (Val (VDouble 3.6)) (Val (VInt 2))) -- Can not accept type double to do Mod function
         ]
 example result:
 TError:Mod only can input two Int
 
+-- This example shows error message 
+-- because this language can not accept set variable twice in a same name.
+-- Instead, you should use Update function.
 bad_2 :: Prog
 bad_2 = [
             Set ("i", Val(VInt 2)),
@@ -145,6 +160,9 @@ example result:
 TError : While : do_Bool argument type error.TError : Can not find the name return in value list.
 2
 
+-- This example shows error message 
+-- because this language can not accept String type in Boolean conditional expressions.
+-- Instead, it only accepts Int and Double, and also some of Bool and String .
 bad_3 :: Prog
 bad_3 = [
             While (Blv_q (Val (VString "a")) (Val (VInt 0))) -- Can not compare String and Int is equal or not
