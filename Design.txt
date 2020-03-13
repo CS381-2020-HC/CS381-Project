@@ -5,9 +5,9 @@ Notably, the scope and lifetime of the variable, which is one of the
 most typical features for C language, have been implemented in it.
 
 Design
-    This language has implemented the first four features on the menu, 
+    This language has implemented the first five features on the menu, 
 including basic data types and operations, conditionals, recursion or 
-loops, and variables or local names. 
+loops, variables or local names, etc... 
     First, three data types, consisting of the boolean value, integer 
 number, and double-precision floating-point number, have been 
 implemented with four kinds of mathematical operations and six types 
